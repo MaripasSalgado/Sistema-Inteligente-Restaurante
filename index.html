@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sistema inteligente para gestión de restaurante El Empanadazo" />
+    <meta name="keywords" content="restaurante, empanadas, gestión, sistema, inteligente" />
+    <meta name="author" content="El Empanadazo" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="El Empanadazo" />
+    <title>El Empanadazo - Sistema Inteligente</title>
+  </head>
+  <body class="font-inter antialiased bg-gray-100 dark:bg-black text-gray-600 dark:text-gray-400">
+    <script>
+        // Establecer tema oscuro por defecto
+        if (!localStorage.getItem('vueuse-color-scheme')) {
+            localStorage.setItem('vueuse-color-scheme', 'dark');
+        }
+        
+        if (localStorage.getItem('sidebar-expanded') == 'true') {
+            document.querySelector('body').classList.add('sidebar-expanded');
+        } else {
+            document.querySelector('body').classList.remove('sidebar-expanded');
+        }
+    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/test-productos.js"></script>
+  </body>
+</html>
