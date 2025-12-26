@@ -59,7 +59,7 @@ Clone the repository:
 
 Bash
 
-git clone https://github.com/your-username/intelligent-restaurant-system.git
+git clone https://github.com/MaripasSalgado/Sistema-Inteligente-Restaurante.git
 Install dependencies:
 
 Bash
