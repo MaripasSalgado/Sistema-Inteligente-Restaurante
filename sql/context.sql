@@ -22181,7 +22181,7 @@ CREATE INDEX idx_movimientos_inventario_venta_id ON public.movimientos_inventari
 -- Name: alertas_consumo StockBajo; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER "StockBajo" AFTER INSERT ON public.alertas_consumo FOR EACH ROW EXECUTE FUNCTION supabase_functions.http_request('https://www.empanadazorestaurantecr.space/api/stock-bajo', 'POST', '{"Content-type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtamlrc3BsaWp4bmJjbW9pdmJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjgwMjQ2MCwiZXhwIjoyMDY4Mzc4NDYwfQ.Ounx9JajMWCwrhdl-0_S4_xswGFltmAbLnqQ0vmxVNk"}', '{}', '5000');
+CREATE TRIGGER "StockBajo" AFTER INSERT ON public.alertas_consumo FOR EACH ROW EXECUTE FUNCTION supabase_functions.http_request('https://www.empanadazorestaurantecr.space/api/stock-bajo', 'POST', '{"Content-type":"application/json","Authorization":"Bearer "Token" '{}', '5000');
 
 
 --
