@@ -9,8 +9,6 @@ export class RecetaProductoService {
    */
   static async getAllRecetasProducto(filters = {}) {
     try {
-      console.log('🔍 getAllRecetasProducto - Iniciando query con filtros:', filters)
-      
       let query = supabase
         .from('recetas_producto')
         .select(`
@@ -41,15 +39,10 @@ export class RecetaProductoService {
       }
 
       const { data, error } = await query
-
-      console.log('🔍 getAllRecetasProducto - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllRecetasProducto - Error:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ getAllRecetasProducto - Datos obtenidos:', data?.length || 0, 'relaciones')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllRecetasProducto - Error inesperado:', error)
@@ -144,8 +137,6 @@ export class RecetaProductoService {
    */
   static async createRelacion(relacionData) {
     try {
-      console.log('📝 createRelacion - Datos recibidos:', relacionData)
-      
       // Verificar si ya existe la relación
       const { data: existente, error: errorCheck } = await supabase
         .from('recetas_producto')
@@ -181,8 +172,6 @@ export class RecetaProductoService {
         console.error('❌ Error al crear relación:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relación creada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al crear relación:', error)
@@ -198,8 +187,6 @@ export class RecetaProductoService {
    */
   static async updateRelacion(relacionId, relacionData) {
     try {
-      console.log('📝 updateRelacion - Datos recibidos:', { relacionId, relacionData })
-      
       // Actualizar la relación
       const { data, error } = await supabase
         .from('recetas_producto')
@@ -216,8 +203,6 @@ export class RecetaProductoService {
         console.error('❌ Error al actualizar relación:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relación actualizada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al actualizar relación:', error)
@@ -232,8 +217,6 @@ export class RecetaProductoService {
    */
   static async deleteRelacion(relacionId) {
     try {
-      console.log('🗑️ deleteRelacion - Datos recibidos:', { relacionId })
-      
       // Eliminar la relación
       const { error } = await supabase
         .from('recetas_producto')
@@ -244,8 +227,6 @@ export class RecetaProductoService {
         console.error('❌ Error al eliminar relación:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relación eliminada exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar relación:', error)
@@ -260,8 +241,6 @@ export class RecetaProductoService {
    */
   static async deleteRelacionesByProducto(productoId) {
     try {
-      console.log('🗑️ deleteRelacionesByProducto - Datos recibidos:', { productoId })
-      
       // Eliminar todas las relaciones del producto
       const { error } = await supabase
         .from('recetas_producto')
@@ -272,8 +251,6 @@ export class RecetaProductoService {
         console.error('❌ Error al eliminar relaciones del producto:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relaciones del producto eliminadas exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar relaciones del producto:', error)
@@ -288,8 +265,6 @@ export class RecetaProductoService {
    */
   static async deleteRelacionesByReceta(recetaId) {
     try {
-      console.log('🗑️ deleteRelacionesByReceta - Datos recibidos:', { recetaId })
-      
       // Eliminar todas las relaciones de la receta
       const { error } = await supabase
         .from('recetas_producto')
@@ -300,8 +275,6 @@ export class RecetaProductoService {
         console.error('❌ Error al eliminar relaciones de la receta:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relaciones de la receta eliminadas exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar relaciones de la receta:', error)
@@ -317,8 +290,6 @@ export class RecetaProductoService {
    */
   static async sincronizarRecetasProducto(productoId, recetas) {
     try {
-      console.log('🔄 sincronizarRecetasProducto - Datos recibidos:', { productoId, recetas })
-      
       // Primero eliminar todas las relaciones existentes
       const deleteResult = await this.deleteRelacionesByProducto(productoId)
       if (!deleteResult.success) {
@@ -349,8 +320,6 @@ export class RecetaProductoService {
         console.error('❌ Error al crear nuevas relaciones:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Relaciones sincronizadas:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al sincronizar relaciones:', error)

@@ -8,21 +8,14 @@ export class CategoriaRecetaService {
    */
   static async getAllCategorias() {
     try {
-      console.log('🔍 getAllCategorias - Iniciando query')
-      
       const { data, error } = await supabase
         .from('categorias_recetas')
         .select('*')
         .order('nombre', { ascending: true })
-
-      console.log('🔍 getAllCategorias - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllCategorias - Error:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ getAllCategorias - Datos obtenidos:', data?.length || 0, 'categorías')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllCategorias - Error inesperado:', error)
@@ -62,9 +55,6 @@ export class CategoriaRecetaService {
    */
   static async createCategoria(categoriaData) {
     try {
-      console.log('📝 createCategoria - Datos recibidos:', categoriaData)
-      console.log('👤 Usuario (creado_por):', categoriaData.creado_por)
-
       if (!categoriaData.creado_por) {
         console.error('❌ No se proporcionó creado_por')
         return { success: false, error: 'Debe estar autenticado para crear categorías' }
@@ -101,8 +91,6 @@ export class CategoriaRecetaService {
 
         return { success: false, error: errorMessage }
       }
-
-      console.log('✅ Categoría creada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al crear categoría:', error)
@@ -118,9 +106,6 @@ export class CategoriaRecetaService {
    */
   static async updateCategoria(categoriaId, categoriaData) {
     try {
-      console.log('📝 updateCategoria - Datos recibidos:', { categoriaId, categoriaData })
-      console.log('👤 Usuario (modificado_por):', categoriaData.modificado_por)
-
       if (!categoriaData.modificado_por) {
         console.error('❌ No se proporcionó modificado_por')
         return { success: false, error: 'Debe estar autenticado para actualizar categorías' }
@@ -145,8 +130,6 @@ export class CategoriaRecetaService {
         console.error('❌ Error al actualizar categoría:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Categoría actualizada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al actualizar categoría:', error)
@@ -161,8 +144,6 @@ export class CategoriaRecetaService {
    */
   static async deleteCategoria(categoriaId) {
     try {
-      console.log('🗑️ deleteCategoria - Datos recibidos:', { categoriaId })
-      
       // Verificar si hay recetas asociadas
       const { data: recetasAsociadas, error: errorRecetas } = await supabase
         .from('recetas')
@@ -192,8 +173,6 @@ export class CategoriaRecetaService {
         console.error('❌ Error al eliminar categoría:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Categoría eliminada exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar categoría:', error)

@@ -103,9 +103,6 @@ export default {
           }
         ]
       }
-
-      console.log('[AnalisisDesviaciones] chartData', chartData)
-
       chart = new Chart(ctx, {
         type: 'bar',
         data: chartData,

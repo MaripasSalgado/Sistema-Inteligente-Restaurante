@@ -135,16 +135,6 @@ export class AuthService {
    */
   static async createInternalUser(userData) {
     try {
-      console.log('[AuthService] Iniciando creación de usuario interno...')
-      console.log('[AuthService] Datos a enviar:', {
-        email: userData.email,
-        nombre: userData.nombre,
-        apellido: userData.apellido,
-        cedula: userData.cedula,
-        rol_id: userData.rol_id,
-        departamento: userData.departamento
-      })
-
       const { data, error } = await supabase.functions.invoke('crear-usuario', {
         body: {
           email: userData.email.trim().toLowerCase(),
@@ -158,15 +148,10 @@ export class AuthService {
           puesto: userData.puesto || null
         }
       })
-
-      console.log('[AuthService] Respuesta de la Edge Function:', { data, error })
-
       if (error) {
         console.error('[AuthService] Error en la Edge Function:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('[AuthService] Usuario creado exitosamente:', data)
       return { success: true, data: data }
     } catch (error) {
       console.error('[AuthService] Error inesperado:', error)

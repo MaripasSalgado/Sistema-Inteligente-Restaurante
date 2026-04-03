@@ -352,8 +352,6 @@ export default {
         'Costo por Porción': `₡${receta.costoPorPorcion.toFixed(2)}`,
         Rentabilidad: `${receta.rentabilidad}%`
       }))
-
-      console.log('Exportando datos:', datos)
       alert('Lista exportada correctamente')
     }
 
@@ -377,7 +375,6 @@ const cancelarEliminacion = () => {
   mostrarModalEliminacion.value = false
   recetaAEliminar.value = null
 }
-
 
     return {
       filtros,

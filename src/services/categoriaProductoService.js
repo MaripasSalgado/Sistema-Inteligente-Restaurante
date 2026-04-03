@@ -9,8 +9,6 @@ export class CategoriaProductoService {
    */
   static async getAllCategorias(filters = {}) {
     try {
-      console.log('🔍 getAllCategorias - Iniciando query con filtros:', filters)
-      
       let query = supabase
         .from('categorias_productos')
         .select(`
@@ -34,15 +32,10 @@ export class CategoriaProductoService {
       }
 
       const { data, error } = await query
-
-      console.log('🔍 getAllCategorias - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllCategorias - Error:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ getAllCategorias - Datos obtenidos:', data?.length || 0, 'categorías')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllCategorias - Error inesperado:', error)
@@ -94,8 +87,6 @@ export class CategoriaProductoService {
    */
   static async createCategoria(categoriaData) {
     try {
-      console.log('📝 createCategoria - Datos recibidos:', categoriaData)
-      
       // Crear la categoría
       const { data, error } = await supabase
         .from('categorias_productos')
@@ -116,8 +107,6 @@ export class CategoriaProductoService {
         console.error('❌ Error al crear categoría:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Categoría creada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al crear categoría:', error)
@@ -133,8 +122,6 @@ export class CategoriaProductoService {
    */
   static async updateCategoria(categoriaId, categoriaData) {
     try {
-      console.log('📝 updateCategoria - Datos recibidos:', { categoriaId, categoriaData })
-      
       // Actualizar la categoría
       const { data, error } = await supabase
         .from('categorias_productos')
@@ -155,8 +142,6 @@ export class CategoriaProductoService {
         console.error('❌ Error al actualizar categoría:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Categoría actualizada:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al actualizar categoría:', error)
@@ -172,8 +157,6 @@ export class CategoriaProductoService {
    */
   static async deleteCategoria(categoriaId, usuarioId) {
     try {
-      console.log('🗑️ deleteCategoria - Datos recibidos:', { categoriaId, usuarioId })
-      
       // Verificar si hay productos asociados
       const { data: productosAsociados, error: errorCheck } = await supabase
         .from('productos')
@@ -203,8 +186,6 @@ export class CategoriaProductoService {
         console.error('❌ Error al eliminar categoría:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Categoría eliminada exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar categoría:', error)

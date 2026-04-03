@@ -442,7 +442,6 @@ const guardarComoBorrador = () => {
   emit('guardar', recetaBorrador)
 }
 
-
     // Watch para actualizar unidad cuando cambie el ingrediente
     watch(() => formulario.value.ingredientes, (ingredientes) => {
       ingredientes.forEach((ing, index) => {
@@ -491,27 +490,13 @@ const guardarComoBorrador = () => {
     // Inicializar formulario si se está editando
     onMounted(() => {
       if (props.receta) {
-        console.log('🔧 Inicializando formulario de edición')
-        console.log('📋 Receta recibida:', props.receta)
-        console.log('📦 Ingredientes disponibles:', props.ingredientes)
-
         // Transformar ingredientes del backend al formato del formulario
         const ingredientesTransformados = (props.receta.ingredientes || []).map(ing => {
           // Puede venir como 'insumos' o 'insumo' desde el backend
           const insumoData = ing.insumos || ing.insumo
           const insumoId = ing.insumo_id || insumoData?.id
-
-          console.log('🔍 Transformando ingrediente:', {
-            original: ing,
-            insumoData,
-            insumoId,
-            nombreExtraido: insumoData?.nombre
-          })
-
           // Verificar si el insumo existe en la lista de ingredientes disponibles
           const insumoEnLista = props.ingredientes.find(i => i.id === insumoId)
-          console.log('✅ Ingrediente encontrado en lista:', insumoEnLista)
-
           return {
             ingredienteId: insumoId,
             nombre: insumoData?.nombre || ing.nombre || '',
@@ -521,9 +506,6 @@ const guardarComoBorrador = () => {
             subtotal: ing.costo_total || ing.subtotal || 0
           }
         })
-
-        console.log('✨ Ingredientes transformados:', ingredientesTransformados)
-
         // Transformar pasos del backend al formato del formulario
         const pasosTransformados = (props.receta.pasos || []).map(paso => {
           // Si es un objeto con descripcion, extraer el string
@@ -533,9 +515,6 @@ const guardarComoBorrador = () => {
           // Si ya es un string, devolverlo tal cual
           return paso
         })
-
-        console.log('✨ Pasos transformados:', pasosTransformados)
-
         formulario.value = {
           id: props.receta.id ?? null,
           nombre: props.receta.nombre,
@@ -545,8 +524,6 @@ const guardarComoBorrador = () => {
           ingredientes: ingredientesTransformados,
           pasos: pasosTransformados
         }
-
-        console.log('📝 Formulario inicializado:', formulario.value)
       } else {
         // Agregar un ingrediente vacío por defecto
         agregarIngrediente()

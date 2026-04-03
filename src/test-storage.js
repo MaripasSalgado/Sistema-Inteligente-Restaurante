@@ -3,8 +3,6 @@ import { StorageService } from '@/services/storageService'
 
 // Función para probar la configuración de Storage
 export const testStorageConfig = async () => {
-  console.log('🧪 Probando configuración de Storage...')
-  
   try {
     // 1. Verificar autenticación
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -12,8 +10,6 @@ export const testStorageConfig = async () => {
       console.error('❌ Usuario no autenticado:', authError)
       return false
     }
-    console.log('✅ Usuario autenticado:', user.email)
-
     // 2. Verificar bucket
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets()
     if (bucketsError) {
@@ -24,11 +20,8 @@ export const testStorageConfig = async () => {
     const fotosBucket = buckets.find(b => b.id === 'fotos_perfil')
     if (!fotosBucket) {
       console.error('❌ Bucket "fotos_perfil" no encontrado')
-      console.log('📋 Buckets disponibles:', buckets.map(b => b.id))
       return false
     }
-    console.log('✅ Bucket "fotos_perfil" encontrado:', fotosBucket)
-
     // 3. Probar listar archivos (para verificar permisos)
     const { data: files, error: listError } = await supabase.storage
       .from('fotos_perfil')
@@ -38,8 +31,6 @@ export const testStorageConfig = async () => {
       console.error('❌ Error listando archivos:', listError)
       return false
     }
-    console.log('✅ Permisos de lectura OK')
-
     // 4. Crear un archivo de prueba pequeño
     const testFile = new File(['test content'], 'test.txt', { type: 'text/plain' })
     const testPath = `${user.id}/test-${Date.now()}.txt`
@@ -52,8 +43,6 @@ export const testStorageConfig = async () => {
       console.error('❌ Error subiendo archivo de prueba:', uploadError)
       return false
     }
-    console.log('✅ Permisos de escritura OK')
-
     // 5. Eliminar archivo de prueba
     const { error: deleteError } = await supabase.storage
       .from('fotos_perfil')
@@ -62,10 +51,7 @@ export const testStorageConfig = async () => {
     if (deleteError) {
       console.warn('⚠️ Error eliminando archivo de prueba:', deleteError)
     } else {
-      console.log('✅ Permisos de eliminación OK')
     }
-
-    console.log('🎉 Configuración de Storage correcta!')
     return true
 
   } catch (error) {
@@ -76,8 +62,6 @@ export const testStorageConfig = async () => {
 
 // Función para probar subir una imagen real
 export const testImageUpload = async (file) => {
-  console.log('🖼️ Probando subida de imagen...')
-  
   try {
     const result = await StorageService.uploadFoto(file, 'fotos_perfil')
     
@@ -85,8 +69,6 @@ export const testImageUpload = async (file) => {
       console.error('❌ Error subiendo imagen:', result.error)
       return false
     }
-    
-    console.log('✅ Imagen subida exitosamente:', result.url)
     return true
     
   } catch (error) {

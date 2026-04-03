@@ -63,7 +63,6 @@ export function useAuth() {
       
       if (authError) {
         // No mostrar errores de sesión faltante en la UI
-        console.log('No hay sesión activa (normal)')
         user.value = null
       } else {
         // Verificar si el usuario está activo
@@ -159,7 +158,6 @@ export function useAuth() {
    * @returns {Promise<boolean>} - true si el logout fue exitoso
    */
   const signOut = async () => {
-    console.log('Iniciando logout...')
     signOutLoading.value = true
     error.value = null
 
@@ -170,10 +168,7 @@ export function useAuth() {
     }, 5000) // 5 segundos
 
     try {
-      console.log('Cerrando sesión en Supabase...')
       const { error: authError } = await AuthService.signOut()
-      
-      console.log('Sesión cerrada exitosamente, limpiando usuario...')
       // Limpiar el usuario inmediatamente
       user.value = null
       
@@ -185,12 +180,8 @@ export function useAuth() {
         signOutLoading.value = false
         return false
       }
-
-      console.log('Redirigiendo al login...')
       // Redirigir al login después del logout
       await router.push('/login')
-      
-      console.log('Logout completado exitosamente')
       clearTimeout(timeoutId)
       signOutLoading.value = false
       return true
@@ -266,7 +257,6 @@ export function useAuth() {
     error.value = null
   }
 
-
   /**
    * Actualizar perfil del usuario
    * @param {object} updates - Datos a actualizar
@@ -314,8 +304,6 @@ export function useAuth() {
 
     // Configurar listener para cambios de autenticación
     authListener = AuthService.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.id)
-      
       if (event === 'SIGNED_IN' && session?.user) {
         const { user: authUser, error: authError } = await AuthService.getCurrentUser()
         if (!authError) {

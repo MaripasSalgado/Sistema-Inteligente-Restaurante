@@ -49,13 +49,15 @@ export function useToast() {
     return addToast(message, 'info', duration)
   }
 
-  const confirm = (message, onConfirm, onCancel) => {
+  const confirm = (message, onConfirm, onCancel, options = {}) => {
     const id = addToast(message, 'confirm', 0) // No auto-remove for confirm
     
     // Add confirm buttons to the toast
     const toast = toasts.value.find(t => t.id === id)
     if (toast) {
       toast.actions = {
+        confirmLabel: options.confirmLabel || 'Confirmar',
+        cancelLabel: options.cancelLabel || 'Cancelar',
         confirm: () => {
           onConfirm()
           removeToast(id)

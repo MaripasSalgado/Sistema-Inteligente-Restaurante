@@ -188,26 +188,14 @@ export default {
   },
   emits: ['ver-lote', 'editar-lote', 'eliminar-lote'],
   setup(props) {
-    console.log('🔍 LotesList setup - Props recibidas:', { 
-      lotes: props.lotes?.length || 0, 
-      insumos: props.insumos?.length || 0,
-      lotesData: props.lotes,
-      insumosData: props.insumos
-    })
-
     // Filtros
     const filtroInsumo = ref('')
     const filtroEstado = ref('')
 
     // Computed properties
     const lotesFiltrados = computed(() => {
-      console.log('🔍 LotesList computed - Lotes originales:', props.lotes?.length || 0)
-      console.log('🔍 LotesList computed - Props.lotes:', props.lotes)
-      
       // Asegurar que props.lotes sea un array
       const lotesArray = Array.isArray(props.lotes) ? props.lotes : []
-      console.log('🔍 LotesList computed - Lotes como array:', lotesArray.length)
-      
       let filtrados = lotesArray
 
       // Filtrar por insumo
@@ -219,8 +207,6 @@ export default {
       if (filtroEstado.value) {
         filtrados = filtrados.filter(lote => lote.estado === filtroEstado.value)
       }
-
-      console.log('🔍 LotesList computed - Lotes filtrados:', filtrados.length)
       return filtrados
     })
 

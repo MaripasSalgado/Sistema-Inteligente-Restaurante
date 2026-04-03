@@ -2,6 +2,40 @@ import { supabase } from '@/config/supabase'
 import { getTimestampCostaRica, toTimestampCostaRica } from '@/utils/dateHelper'
 
 export class ProductoService {
+  static normalizarNombre(nombre = '') {
+    return String(nombre).trim().replace(/\s+/g, ' ').toLowerCase()
+  }
+
+  static async verificarNombreDuplicado(nombre, excludeId = null) {
+    const nombreLimpio = String(nombre || '').trim()
+
+    if (!nombreLimpio) {
+      return { success: true, existe: false }
+    }
+
+    let query = supabase
+      .from('productos')
+      .select('id, nombre')
+      .ilike('nombre', nombreLimpio)
+
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+
+    const { data, error } = await query.limit(10)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    const nombreNormalizado = ProductoService.normalizarNombre(nombreLimpio)
+    const duplicadoExacto = (data || []).find(
+      producto => ProductoService.normalizarNombre(producto.nombre) === nombreNormalizado
+    )
+
+    return { success: true, existe: Boolean(duplicadoExacto), producto: duplicadoExacto || null }
+  }
+
   /**
    * Obtener todos los productos
    * @param {object} filters - Filtros opcionales
@@ -9,8 +43,6 @@ export class ProductoService {
    */
   static async getAllProductos(filters = {}) {
     try {
-      console.log('🔍 getAllProductos - Iniciando query con filtros:', filters)
-      
       let query = supabase
         .from('productos')
         .select(`
@@ -59,15 +91,10 @@ export class ProductoService {
       }
 
       const { data, error } = await query
-
-      console.log('🔍 getAllProductos - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllProductos - Error:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ getAllProductos - Datos obtenidos:', data?.length || 0, 'productos')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllProductos - Error inesperado:', error)
@@ -128,36 +155,68 @@ export class ProductoService {
    */
   static async createProducto(productoData) {
     try {
-      console.log('📝 createProducto - Datos recibidos:', productoData)
+      const validacionNombre = await ProductoService.verificarNombreDuplicado(productoData.nombre)
+      if (!validacionNombre.success) {
+        return { success: false, error: validacionNombre.error || 'Error al validar nombre de producto' }
+      }
+
+      if (validacionNombre.existe) {
+        return {
+          success: false,
+          errorCode: 'DUPLICATE_PRODUCT_NAME',
+          error: 'Producto ya existe',
+          existingProduct: validacionNombre.producto
+        }
+      }
 
       // Generar código único si no se proporciona
       let codigo = productoData.codigo
       if (!codigo) {
-        console.log('🔢 Generando código de producto...')
         try {
+          // Obtener TODOS los códigos para encontrar el máximo numérico
           const { data: productosExistentes, error: errorCodigo } = await supabase
             .from('productos')
             .select('codigo')
-            .order('fecha_creacion', { ascending: false })
-            .limit(1)
+            .not('codigo', 'is', null)
 
           if (errorCodigo) {
-            console.error('❌ Error al obtener último código:', errorCodigo)
+            console.error('❌ Error al obtener códigos:', errorCodigo)
           }
 
-          console.log('📋 Productos existentes:', productosExistentes)
-          const ultimoCodigo = productosExistentes?.[0]?.codigo || 'PROD-000'
-          console.log('📋 Último código encontrado:', ultimoCodigo)
-          const numero = parseInt(ultimoCodigo.split('-')[1]) + 1
-          codigo = `PROD-${String(numero).padStart(3, '0')}`
-          console.log('✅ Código generado:', codigo)
+          let numeroMaximo = 0
+          if (productosExistentes && productosExistentes.length > 0) {
+            productosExistentes.forEach(item => {
+              if (item.codigo) {
+                const match = item.codigo.match(/PROD-(\d+)/)
+                if (match) {
+                  const num = parseInt(match[1], 10)
+                  if (!isNaN(num) && num > numeroMaximo) {
+                    numeroMaximo = num
+                  }
+                }
+              }
+            })
+          }
+
+          const numeroSiguiente = numeroMaximo + 1
+          codigo = `PROD-${String(numeroSiguiente).padStart(3, '0')}`
+
+          // Verificar que el código no exista (por si acaso hay race condition)
+          const { data: existe } = await supabase
+            .from('productos')
+            .select('id')
+            .eq('codigo', codigo)
+            .limit(1)
+
+          if (existe && existe.length > 0) {
+            console.warn('Código de producto ya existe, usando timestamp:', codigo)
+            codigo = `PROD-${Date.now().toString().slice(-6)}`
+          }
         } catch (codigoError) {
           console.error('❌ Error al generar código:', codigoError)
-          codigo = 'PROD-001' // Código por defecto si falla
+          codigo = `PROD-${Date.now().toString().slice(-6)}` // Código con timestamp si falla
         }
       }
-
-      console.log('💾 Insertando producto en la base de datos...')
       const productoInsert = {
         codigo: codigo,
         nombre: productoData.nombre,
@@ -171,9 +230,6 @@ export class ProductoService {
         fecha_creacion: getTimestampCostaRica(),
         fecha_modificacion: getTimestampCostaRica()
       }
-
-      console.log('📤 Datos a insertar:', productoInsert)
-
       // Crear el producto
       const { data, error } = await supabase
         .from('productos')
@@ -183,16 +239,17 @@ export class ProductoService {
 
       if (error) {
         console.error('❌ Error al crear producto en BD:', error)
+        if (error.code === '23505' || (error.message || '').toLowerCase().includes('duplicate')) {
+          return {
+            success: false,
+            errorCode: 'DUPLICATE_PRODUCT_NAME',
+            error: 'Producto ya existe'
+          }
+        }
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Producto creado exitosamente:', data)
-      
       // Si hay recetas asociadas, crear las relaciones
       if (productoData.recetas && productoData.recetas.length > 0) {
-        console.log('🔗 Creando relaciones de recetas...')
-        console.log('📋 Recetas a asociar:', productoData.recetas)
-
         const recetasRelaciones = productoData.recetas.map(receta => ({
           producto_id: data.id,
           receta_id: receta.receta_id,
@@ -201,9 +258,6 @@ export class ProductoService {
           fecha_creacion: getTimestampCostaRica(),
           fecha_modificacion: getTimestampCostaRica()
         }))
-
-        console.log('📤 Datos de relaciones a insertar:', recetasRelaciones)
-
         const { error: errorRecetas } = await supabase
           .from('recetas_producto')
           .insert(recetasRelaciones)
@@ -212,11 +266,8 @@ export class ProductoService {
           console.error('❌ Error al crear relaciones de recetas:', errorRecetas)
           // No fallamos la creación del producto, solo registramos el error
         } else {
-          console.log('✅ Relaciones de recetas creadas exitosamente')
         }
       }
-
-      console.log('🎉 createProducto completado exitosamente')
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al crear producto:', error)
@@ -232,8 +283,20 @@ export class ProductoService {
    */
   static async updateProducto(productoId, productoData) {
     try {
-      console.log('📝 updateProducto - Datos recibidos:', { productoId, productoData })
-      
+      const validacionNombre = await ProductoService.verificarNombreDuplicado(productoData.nombre, productoId)
+      if (!validacionNombre.success) {
+        return { success: false, error: validacionNombre.error || 'Error al validar nombre de producto' }
+      }
+
+      if (validacionNombre.existe) {
+        return {
+          success: false,
+          errorCode: 'DUPLICATE_PRODUCT_NAME',
+          error: 'Producto ya existe',
+          existingProduct: validacionNombre.producto
+        }
+      }
+
       // Actualizar el producto
       const { data, error } = await supabase
         .from('productos')
@@ -254,11 +317,15 @@ export class ProductoService {
 
       if (error) {
         console.error('❌ Error al actualizar producto:', error)
+        if (error.code === '23505' || (error.message || '').toLowerCase().includes('duplicate')) {
+          return {
+            success: false,
+            errorCode: 'DUPLICATE_PRODUCT_NAME',
+            error: 'Producto ya existe'
+          }
+        }
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Producto actualizado:', data)
-      
       // Actualizar relaciones de recetas si se proporcionan
       if (productoData.recetas !== undefined) {
         // Primero eliminar relaciones existentes
@@ -307,8 +374,6 @@ export class ProductoService {
    */
   static async deleteProducto(productoId, usuarioId) {
     try {
-      console.log('🗑️ deleteProducto - Datos recibidos:', { productoId, usuarioId })
-      
       // Primero eliminar relaciones con recetas
       const { error: errorRecetas } = await supabase
         .from('recetas_producto')
@@ -319,7 +384,7 @@ export class ProductoService {
         console.error('❌ Error al eliminar relaciones de recetas:', errorRecetas)
         return { success: false, error: errorRecetas.message }
       }
-      
+
       // Eliminar el producto
       const { error } = await supabase
         .from('productos')
@@ -330,8 +395,6 @@ export class ProductoService {
         console.error('❌ Error al eliminar producto:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Producto eliminado exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar producto:', error)

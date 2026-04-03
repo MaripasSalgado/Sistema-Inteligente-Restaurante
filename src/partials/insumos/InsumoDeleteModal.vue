@@ -3,14 +3,14 @@
     <div class="bg-zinc-900/95 border border-zinc-700/50 rounded-lg shadow-2xl w-full max-w-md p-6">
       <h2 class="text-lg font-bold text-white mb-4">Eliminar / Desactivar Insumo</h2>
 
-      <p class="text-sm text-gray-300 mb-2">
-        Escriba el motivo de la eliminación o desactivación:
+      <p class="text-sm text-gray-300 mt-3 mb-2">
+        Para confirmar la acción, escribe <span class="font-semibold text-yellow-400">confirmar</span>:
       </p>
-      <textarea
-        v-model="motivo"
-        class="w-full bg-zinc-900/80 border border-zinc-700/50 rounded p-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
-        rows="3"
-        placeholder="Motivo..."
+      <input
+        v-model="confirmacionTexto"
+        type="text"
+        class="w-full bg-zinc-900/80 border border-zinc-700/50 rounded p-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        placeholder="confirmar"
       />
 
       <!-- Mensaje de alerta -->
@@ -21,7 +21,7 @@
       <!-- Botones -->
       <div class="flex justify-end gap-2 mt-4">
         <button
-          class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors"
+          class="px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600 transition-colors border border-zinc-600"
           @click="cerrar"
         >
           Cancelar
@@ -30,8 +30,8 @@
         <!-- Escenario normal: Eliminar -->
         <button
           v-if="!blocked"
-          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          :disabled="loading || !motivo"
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition-colors border border-red-400"
+          :disabled="loading || !confirmacionValida"
           @click="confirmarEliminacion"
         >
           {{ loading ? 'Procesando...' : 'Eliminar' }}
@@ -40,8 +40,8 @@
         <!-- Escenario bloqueado: opciones -->
         <button
           v-if="blocked && opciones.includes('Desactivar insumo')"
-          class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-          :disabled="loading || !motivo"
+          class="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition-colors border border-yellow-300"
+          :disabled="loading || !confirmacionValida"
           @click="desactivarInsumo"
         >
           {{ loading ? 'Procesando...' : 'Desactivar' }}
@@ -49,7 +49,7 @@
 
         <button
           v-if="blocked && opciones.includes('Ver historial completo')"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          class="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 transition-colors border border-yellow-300"
           @click="verHistorial"
         >
           Ver historial
@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { InsumoService } from '../../services/insumoService'
 
 export default {
@@ -75,16 +75,18 @@ export default {
       required: true // ID del usuario logueado
     }
   },
-  emits: ['cerrar', 'actualizado'],
+  emits: ['cerrar', 'actualizado', 'ver-historial'],
   setup(props, { emit }) {
     const motivo = ref('')
     const alerta = ref(null)
     const opciones = ref([])
     const blocked = ref(false)
     const loading = ref(false)
+    const confirmacionTexto = ref('')
+    const confirmacionValida = computed(() => confirmacionTexto.value.trim().toLowerCase() === 'confirmar')
 
     const cerrar = () => {
-      motivo.value = ''
+      confirmacionTexto.value = ''
       alerta.value = null
       opciones.value = []
       blocked.value = false
@@ -100,8 +102,7 @@ export default {
 
       const result = await InsumoService.deleteInsumo(
         props.insumo.id,
-        props.usuarioId,
-        motivo.value
+        props.usuarioId
       )
 
       if (result.blocked) {
@@ -126,8 +127,7 @@ export default {
 
       const result = await InsumoService.deactivateInsumo(
         props.insumo.id,
-        props.usuarioId,
-        motivo.value
+        props.usuarioId
       )
 
       if (result.blocked) {
@@ -143,13 +143,20 @@ export default {
       loading.value = false
     }
 
+    const verHistorial = () => {
+      if (!props.insumo?.id) return
+      emit('ver-historial', props.insumo.id)
+      cerrar()
+    }
+
     const getStockTotal = (insumo) => {
       if (!insumo?.lotes) return 0
       return insumo.lotes.reduce((total, lote) => total + parseFloat(lote.cantidad_actual || 0), 0)
     }
 
     return {
-      motivo,
+      confirmacionTexto,
+      confirmacionValida,
       alerta,
       opciones,
       blocked,
@@ -157,6 +164,7 @@ export default {
       cerrar,
       confirmarEliminacion,
       desactivarInsumo,
+      verHistorial,
       getStockTotal
     }
   }

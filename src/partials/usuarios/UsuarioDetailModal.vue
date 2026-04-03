@@ -174,7 +174,6 @@ export default {
       emit('editar', props.usuario)
     }
 
-
     const getRolNombre = (rolId) => {
       // Buscar el rol en la lista de roles cargados
       const rol = props.roles.find(r => r.id === rolId)

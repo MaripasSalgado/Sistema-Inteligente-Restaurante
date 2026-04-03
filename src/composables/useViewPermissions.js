@@ -104,7 +104,6 @@ export function useViewPermissions() {
 
     // MODO DESARROLLO: Si no hay permisos cargados, permitir acceso
     if (rolePermissions.value.length === 0) {
-      console.log(`[useViewPermissions] MODO DESARROLLO: Permitiendo operación '${operation}' en: ${route}`)
       return true
     }
 
@@ -115,8 +114,6 @@ export function useViewPermissions() {
     const roleHasPermission = rolePermissions.value.some(perm => 
       perm.vista_ruta === viewName && perm.operacion_nombre === operation
     )
-
-    console.log(`[useViewPermissions] Rol puede '${operation}' en '${viewName}': ${roleHasPermission}`)
     return roleHasPermission
   }
 

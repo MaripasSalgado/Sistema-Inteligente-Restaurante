@@ -31,7 +31,6 @@ export function useEnvironment() {
   // Función para logging condicional
   const log = (...args) => {
     if (ENV.DEBUG) {
-      console.log('[DEBUG]', ...args)
     }
   }
 

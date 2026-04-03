@@ -150,7 +150,6 @@
       </div>
     </div>
 
-
     <!-- Modal de Horas Extra -->
     <div v-if="dialogoHorasExtra.visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div class="bg-zinc-900 border border-zinc-700/70 rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4">

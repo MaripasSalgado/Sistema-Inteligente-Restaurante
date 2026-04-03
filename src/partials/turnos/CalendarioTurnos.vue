@@ -723,7 +723,6 @@ export default {
       )
     }
 
-
     // Modal de turno
     const mostrarModalTurno = ref(false)
     const formularioTurno = ref({
@@ -1082,7 +1081,6 @@ export default {
           nombreCompleto: `${emp.nombre} ${emp.apellido}`,
           puesto: emp.puesto
         }))
-        console.log(`Empleados cargados: ${empleadosDisponibles.value.length}`, empleadosDisponibles.value)
       }
     }
 

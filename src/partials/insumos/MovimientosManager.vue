@@ -473,8 +473,6 @@ export default {
     const cargarLotes = () => {
       if (formulario.value.insumoId) {
         const insumo = props.insumos.find(i => i.id === formulario.value.insumoId)
-        console.log('🔍 Insumo seleccionado:', insumo)
-        console.log('🔍 Lotes disponibles:', insumo?.lotes)
         lotesDisponibles.value = insumo?.lotes || []
         formulario.value.loteId = ''
       } else {
@@ -498,7 +496,6 @@ export default {
     }
 
     const editarMovimiento = (movimiento) => {
-      console.log('🔧 Editando movimiento:', movimiento)
       movimientoEditando.value = movimiento
       
       // Extraer el insumo_id del lote
@@ -542,9 +539,6 @@ export default {
           ...formulario.value,
           usuario_id: user.value?.id
         }
-
-        console.log('💾 Guardando movimiento:', movimientoData)
-
         let result
         if (movimientoEditando.value) {
           // Actualizar movimiento existente
@@ -568,8 +562,6 @@ export default {
             ...movimientoData,
             lote: loteSeleccionado?.lote || ''
           }
-
-          console.log('📤 Emitiendo nuevo movimiento:', nuevoMovimiento)
           emit('registrar-movimiento', nuevoMovimiento)
         }
 
@@ -583,8 +575,6 @@ export default {
     const eliminarMovimiento = async (movimiento) => {
       if (confirm('¿Estás seguro de que quieres eliminar este movimiento? Esto revertirá los cambios en el inventario.')) {
         try {
-          console.log('🗑️ Eliminando movimiento:', movimiento)
-          
           const result = await MovimientoInventarioService.deleteMovimiento(
             movimiento.id,
             user.value?.id
@@ -602,7 +592,6 @@ export default {
         }
       }
     }
-
 
     return {
       mostrarFormulario,

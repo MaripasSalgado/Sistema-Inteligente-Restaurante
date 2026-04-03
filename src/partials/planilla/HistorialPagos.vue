@@ -456,7 +456,6 @@ export default {
     }
 
     const verDetallePago = (pago) => {
-      console.log('Ver detalle de pago:', pago)
       mostrarMensaje(`Mostrando detalles del pago de ${getEmpleadoNombre(pago.empleadoId)}`, 'success')
     }
 

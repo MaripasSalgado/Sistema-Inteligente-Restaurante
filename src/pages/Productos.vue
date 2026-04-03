@@ -283,7 +283,7 @@ export default {
 
     // Composables
     const { user } = useAuth()
-    const { addToast: showToast } = useToast()
+    const { addToast: showToast, confirm: showConfirmToast } = useToast()
     const usuarioId = computed(() => user.value?.id || null)
 
     // Tabs
@@ -373,7 +373,6 @@ export default {
 
     // Cargar datos iniciales
     const cargarDatos = async () => {
-      console.log('🔄 INICIANDO CARGA DE DATOS DE PRODUCTOS...')
       loading.value = true
       
       try {
@@ -381,7 +380,6 @@ export default {
         const categoriasResult = await CategoriaProductoService.getAllCategorias()
         if (categoriasResult.success) {
           categorias.value = categoriasResult.data || []
-          console.log('✅ Categorías cargadas:', categorias.value.length)
         } else {
           console.error('❌ Error al cargar categorías:', categoriasResult.error)
           showToast('Error al cargar categorías: ' + categoriasResult.error, 'error')
@@ -391,7 +389,6 @@ export default {
         const productosResult = await ProductoService.getAllProductos()
         if (productosResult.success) {
           productos.value = productosResult.data || []
-          console.log('✅ Productos cargados:', productos.value.length)
         } else {
           console.error('❌ Error al cargar productos:', productosResult.error)
           showToast('Error al cargar productos: ' + productosResult.error, 'error')
@@ -401,7 +398,6 @@ export default {
         const recetasResult = await RecetaService.getAllRecetas({ activa: true })
         if (recetasResult.success) {
           recetas.value = recetasResult.data || []
-          console.log('✅ Recetas cargadas:', recetas.value.length)
         } else {
           console.error('❌ Error al cargar recetas:', recetasResult.error)
           showToast('Error al cargar recetas: ' + recetasResult.error, 'error')
@@ -412,13 +408,10 @@ export default {
         showToast('Error inesperado al cargar datos', 'error')
       } finally {
         loading.value = false
-        console.log('🏁 CARGA DE DATOS FINALIZADA')
       }
     }
 
     const guardarProducto = async (producto) => {
-      console.log('💾 guardarProducto - Datos recibidos:', producto)
-
       // Validaciones previas
       if (!producto.nombre || !producto.categoria_id || !producto.precio_venta) {
         showToast('Por favor completa todos los campos obligatorios', 'warning')
@@ -440,15 +433,16 @@ export default {
         let result
         if (producto.id) {
           // Editar producto existente
-          console.log('📝 Editando producto existente con ID:', producto.id)
           result = await ProductoService.updateProducto(producto.id, {
             ...producto,
             modificado_por: usuarioId.value
           })
 
           if (result.success) {
-            console.log('✅ Producto actualizado exitosamente')
             showToast('Producto actualizado correctamente', 'success')
+          } else if (result.errorCode === 'DUPLICATE_PRODUCT_NAME') {
+            showToast('Producto ya existe', 'warning')
+            return
           } else {
             console.error('❌ Error al actualizar:', result.error)
             showToast('Error al actualizar producto: ' + result.error, 'error')
@@ -456,28 +450,82 @@ export default {
           }
         } else {
           // Crear nuevo producto
-          console.log('➕ Creando nuevo producto')
           result = await ProductoService.createProducto({
             ...producto,
             creado_por: usuarioId.value
           })
 
           if (result.success) {
-            console.log('✅ Producto creado exitosamente:', result.data)
             showToast('Producto creado correctamente', 'success')
+          } else if (result.errorCode === 'DUPLICATE_PRODUCT_NAME') {
+            const nombreVariante = generarNombreVariante(producto.nombre)
+            showToast('Producto ya existe', 'warning')
+            showConfirmToast(
+              `Producto ya existe. ¿Deseas crear la variante "${nombreVariante}"?`,
+              async () => {
+                await crearVarianteDesdeFormulario(producto, nombreVariante)
+              }
+            )
+            return
           } else {
             console.error('❌ Error al crear:', result.error)
             showToast('Error al crear producto: ' + result.error, 'error')
             return
           }
         }
-
-        console.log('🔄 Recargando datos...')
         await cargarDatos() // Recargar datos
         cerrarFormulario()
       } catch (error) {
         console.error('❌ Error inesperado al guardar producto:', error)
         showToast('Error inesperado: ' + error.message, 'error')
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const normalizarNombre = (nombre = '') => String(nombre).trim().replace(/\s+/g, ' ').toLowerCase()
+
+    const generarNombreVariante = (nombreBase) => {
+      const baseNormalizada = String(nombreBase || '').trim().replace(/\s+/g, ' ')
+      const base = baseNormalizada || 'Producto'
+      const nombresExistentes = new Set(productos.value.map(p => normalizarNombre(p.nombre)))
+
+      let nombreVariante = `${base} (Variante)`
+      let contador = 2
+
+      while (nombresExistentes.has(normalizarNombre(nombreVariante))) {
+        nombreVariante = `${base} (Variante ${contador})`
+        contador += 1
+      }
+
+      return nombreVariante
+    }
+
+    const crearVarianteDesdeFormulario = async (producto, nombreVariante) => {
+      if (!usuarioId.value) {
+        showToast('Error: No se pudo identificar el usuario', 'error')
+        return
+      }
+
+      loading.value = true
+      try {
+        const result = await ProductoService.createProducto({
+          ...producto,
+          nombre: nombreVariante,
+          creado_por: usuarioId.value
+        })
+
+        if (!result.success) {
+          showToast('No se pudo crear la variante: ' + (result.error || 'Error desconocido'), 'error')
+          return
+        }
+
+        showToast('Variante creada correctamente', 'success')
+        await cargarDatos()
+        cerrarFormulario()
+      } catch (error) {
+        console.error('❌ Error inesperado al crear variante:', error)
+        showToast('Error inesperado al crear variante', 'error')
       } finally {
         loading.value = false
       }
@@ -495,8 +543,6 @@ export default {
 
       loading.value = true
       try {
-        console.log('🗑️ Eliminando producto:', producto)
-        
         const result = await ProductoService.deleteProducto(producto.id, usuarioId.value)
         
         if (result.success) {
@@ -520,9 +566,6 @@ export default {
 
     const confirmarDuplicacion = async (productoDuplicado) => {
       const productoOriginal = productoSeleccionado.value
-
-      console.log('🔄 Duplicando producto:', productoOriginal.nombre, '→', productoDuplicado.nombre)
-
       loading.value = true
       try {
         // Preparar datos del producto duplicado con límites de caracteres
@@ -541,14 +584,10 @@ export default {
             observaciones: r.observaciones ? String(r.observaciones).substring(0, 200) : null
           }))
         }
-
-        console.log('📤 Datos del producto a duplicar:', productoData)
-
         // Crear el producto duplicado
         const result = await ProductoService.createProducto(productoData)
 
         if (result.success) {
-          console.log('✅ Producto duplicado exitosamente')
           showToast('Producto duplicado correctamente', 'success')
 
           // Recargar lista de productos
@@ -575,8 +614,6 @@ export default {
     const crearCategoria = async (categoria) => {
       loading.value = true
       try {
-        console.log('📝 Creando categoría:', categoria)
-        
         const result = await CategoriaProductoService.createCategoria({
           ...categoria,
           creado_por: usuarioId.value
@@ -599,8 +636,6 @@ export default {
     const editarCategoria = async (categoria) => {
       loading.value = true
       try {
-        console.log('📝 Editando categoría:', categoria)
-        
         const result = await CategoriaProductoService.updateCategoria(categoria.id, {
           ...categoria,
           modificado_por: usuarioId.value
@@ -627,8 +662,6 @@ export default {
 
       loading.value = true
       try {
-        console.log('🗑️ Eliminando categoría:', categoria)
-        
         const result = await CategoriaProductoService.deleteCategoria(categoria.id, usuarioId.value)
         
         if (result.success) {
@@ -662,7 +695,6 @@ export default {
 
     // Cargar datos al montar el componente
     onMounted(() => {
-      console.log('🎯 COMPONENTE MONTADO - Iniciando carga de datos de productos...')
       cargarDatos()
     })
 

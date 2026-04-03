@@ -167,7 +167,6 @@ export default {
         predicciones.value = preds
 
         // Debug: Log loaded data
-        console.log('Dashboard data loaded:', dashboardData)
       } catch (error) {
         console.error('Error loading dashboard data:', error)
       } finally {

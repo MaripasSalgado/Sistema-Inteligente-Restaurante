@@ -22,13 +22,13 @@
                   @click="toast.actions.confirm"
                   class="bg-red-600 text-white px-4 py-2 text-sm font-medium rounded hover:bg-red-700 transition-colors"
                 >
-                  Confirmar
+                  {{ toast.actions.confirmLabel || 'Confirmar' }}
                 </button>
                 <button
                   @click="toast.actions.cancel"
                   class="bg-gray-600 border border-zinc-600 text-white px-4 py-2 text-sm font-medium rounded hover:bg-gray-500 transition-colors"
                 >
-                  Cancelar
+                  {{ toast.actions.cancelLabel || 'Cancelar' }}
                 </button>
               </div>
             </div>

@@ -174,7 +174,6 @@ export default {
         
         if (success) {
           // Mostrar mensaje de reenvío exitoso
-          console.log('Email reenviado exitosamente')
         }
       } catch (error) {
         console.error('Error reenviando email:', error)

@@ -80,8 +80,6 @@ export class LoteInsumoService {
    */
   static async createLote(loteData) {
     try {
-      console.log('📦 createLote - Datos recibidos:', loteData)
-      
       // Convertir fechas a timestamps de Costa Rica
       const fechaIngreso = loteData.fecha_ingreso 
         ? toTimestampCostaRica(loteData.fecha_ingreso)
@@ -90,9 +88,6 @@ export class LoteInsumoService {
       const fechaVencimiento = loteData.fecha_vencimiento 
         ? toTimestampCostaRica(loteData.fecha_vencimiento)
         : null
-      
-      console.log('🕐 Fechas convertidas (Costa Rica):', { fechaIngreso, fechaVencimiento })
-      
       const { data, error } = await supabase
         .from('lotes_insumos')
         .insert([{
@@ -117,8 +112,6 @@ export class LoteInsumoService {
         console.error('❌ Error al crear lote:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Lote creado exitosamente:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al crear lote:', error)
@@ -134,8 +127,6 @@ export class LoteInsumoService {
    */
   static async updateLote(loteId, loteData) {
     try {
-      console.log('✏️ updateLote - Datos recibidos:', { loteId, loteData })
-      
       // Convertir fechas a timestamps de Costa Rica si se proporcionan
       const fechaIngreso = loteData.fecha_ingreso 
         ? toTimestampCostaRica(loteData.fecha_ingreso)
@@ -171,8 +162,6 @@ export class LoteInsumoService {
         console.error('❌ Error al actualizar lote:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Lote actualizado exitosamente:', data)
       return { success: true, data }
     } catch (error) {
       console.error('❌ Error inesperado al actualizar lote:', error)

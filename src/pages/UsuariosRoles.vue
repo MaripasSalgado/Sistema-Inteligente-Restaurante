@@ -160,7 +160,6 @@
                     <RolesPermissionsManager />
                   </div>
 
-
         </div>
       </main>
 
@@ -237,7 +236,6 @@ export default {
       { id: 'nuevo', nombre: 'Nuevo Usuario' },
       { id: 'roles', nombre: 'Roles' }
     ]
-
 
     // Computed properties
     const estadisticas = computed(() => {
@@ -338,9 +336,6 @@ export default {
           }
         } else {
           // Crear nuevo usuario - usar Edge Function
-          console.log('[UsuariosRoles] Creando nuevo usuario...')
-          console.log('[UsuariosRoles] Datos del formulario:', usuario)
-          
           const { AuthService } = await import('@/services/authService')
           const result = await AuthService.createInternalUser({
             email: usuario.email,
@@ -353,9 +348,6 @@ export default {
             departamento: usuario.departamento,
             puesto: usuario.puesto
           })
-          
-          console.log('[UsuariosRoles] Resultado de createInternalUser:', result)
-          
           if (result.success) {
             success('Usuario creado exitosamente')
             await cargarUsuarios()
@@ -374,7 +366,6 @@ export default {
         loading.value = false
       }
     }
-
 
     const crearRol = (rol) => {
       const nuevoRol = {

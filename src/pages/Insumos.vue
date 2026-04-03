@@ -22,9 +22,7 @@
               <p class="text-gray-400 mt-2">Administra el inventario de ingredientes y materias primas</p>
             </div>
 
-
           </div>
-
 
           <!-- Tabs -->
           <div class="mb-8">
@@ -83,7 +81,6 @@
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
               <span class="ml-2 text-gray-400">Cargando...</span>
             </div>
-
 
               <InsumosList 
               v-if="activeTab === 'inventario'"
@@ -151,7 +148,6 @@
 
     </div>
 
-
     <!-- Modal de Detalle -->
     <InsumoDetail 
       v-if="mostrarModalVer"
@@ -177,7 +173,8 @@
       :insumo="insumoSeleccionado"
       :usuario-id="usuarioId || ''"
       @cerrar="cerrarModalEliminar"
-      @confirmar="confirmarEliminacion"
+      @actualizado="confirmarEliminacion"
+      @ver-historial="verHistorialInsumo"
     />
 
     <!-- Modales de Lotes -->
@@ -192,7 +189,7 @@
 
     <!-- Modal de Editar Lote -->
     <LoteEditModal
-      v-show="mostrarModalEditarLote"
+      v-if="mostrarModalEditarLote"
       :lote="loteSeleccionado"
       :insumos="insumos"
       :proveedores="proveedoresActivos"
@@ -202,7 +199,7 @@
 
     <!-- Modal de Eliminar Lote -->
     <LoteDeleteModal
-      v-show="mostrarModalEliminarLote"
+      v-if="mostrarModalEliminarLote"
       :lote="loteSeleccionado"
       :insumos="insumos"
       :usuario-id="usuarioId || ''"
@@ -289,39 +286,26 @@ export default {
     // Composables
     const { user } = useAuth()
     const usuarioId = computed(() => user.value?.id || null)
-    const { addToast: showToast } = useToast()
+    const { addToast: showToast, confirm: showConfirmToast } = useToast()
     const { proveedoresActivos, cargarProveedoresActivos } = useProveedores()
     
 
-
-
     // Cargar datos iniciales
     const cargarDatos = async () => {
-      console.log('🔄 INICIANDO CARGA DE DATOS...')
       loading.value = true
       
       try {
-        console.log('📡 Intentando conectar con base de datos...')
-        
         // Cargar proveedores activos
         await cargarProveedoresActivos()
         
         const result = await InsumosModuleService.getDashboard()
-        console.log('Resultado del dashboard:', result)
-        
         if (result.success) {
           insumos.value = result.data.insumos || []
           categorias.value = result.data.categorias || []
           
           // Extraer lotes de los insumos
           const todosLosLotes = []
-          console.log('🔍 Extrayendo lotes de insumos...')
           insumos.value.forEach(insumo => {
-            console.log(`🔍 Insumo ${insumo.nombre}:`, { 
-              tieneLotes: !!insumo.lotes, 
-              cantidadLotes: insumo.lotes?.length || 0,
-              lotes: insumo.lotes 
-            })
             if (insumo.lotes && insumo.lotes.length > 0) {
               insumo.lotes.forEach(lote => {
                 todosLosLotes.push({
@@ -335,19 +319,11 @@ export default {
           
           // Cargar movimientos
           await cargarMovimientos()
-          
-          console.log('✅ Datos reales cargados:', { 
-            insumos: insumos.value.length, 
-            categorias: categorias.value.length, 
-            lotes: lotes.value.length,
-            movimientos: movimientos.value.length
-          })
         } else {
           console.error('❌ Error al cargar datos:', result.error)
           showToast('Error al cargar datos: ' + result.error, 'error')
           
           // Cargar datos de prueba si hay error
-          console.log('⚠️ Fallback a datos de prueba...')
           await cargarDatosPrueba()
         }
       } catch (error) {
@@ -359,21 +335,15 @@ export default {
         await cargarDatosPrueba()
       } finally {
         loading.value = false
-        console.log('🏁 CARGA DE DATOS FINALIZADA')
       }
     }
 
     // Cargar movimientos de inventario
     const cargarMovimientos = async () => {
       try {
-        console.log('📋 Cargando movimientos de inventario...')
         const result = await MovimientoInventarioService.getAllMovimientos()
-        console.log('📋 Resultado de carga de movimientos:', result)
-        
         if (result.success) {
           movimientos.value = result.data || []
-          console.log('✅ Movimientos cargados:', movimientos.value.length)
-          console.log('📋 Datos de movimientos:', movimientos.value)
         } else {
           console.warn('⚠️ No se pudieron cargar movimientos:', result.error)
           movimientos.value = []
@@ -387,19 +357,11 @@ export default {
 
     // Cargar datos de prueba como fallback
     const cargarDatosPrueba = async () => {
-      console.log('🚀 INICIANDO CARGA DE DATOS DE PRUEBA...')
       loading.value = true
       
       try {
-        console.log('📦 Importando mockData...')
         // Importar datos de prueba
         const { mockInsumos, mockCategorias } = await import('../utils/mockData')
-        console.log('✅ MockData importado:', { 
-          mockInsumos: mockInsumos.length, 
-          mockCategorias: mockCategorias.length 
-        })
-        
-        console.log('🔄 Procesando estructura de datos...')
         // Simular estructura de datos real
         insumos.value = mockInsumos.map(insumo => {
           const insumoProcesado = {
@@ -409,7 +371,6 @@ export default {
               categoria: mockCategorias.find(cat => cat.id === catId)
             }))
           }
-          console.log('📝 Insumo procesado:', insumoProcesado.nombre, insumoProcesado.categorias.length, 'categorías')
           return insumoProcesado
         })
         
@@ -417,13 +378,7 @@ export default {
         
         // Extraer lotes de los insumos
         const todosLosLotes = []
-        console.log('🔍 Extrayendo lotes de insumos (datos de prueba)...')
         insumos.value.forEach(insumo => {
-          console.log(`🔍 Insumo ${insumo.nombre}:`, { 
-            tieneLotes: !!insumo.lotes, 
-            cantidadLotes: insumo.lotes?.length || 0,
-            lotes: insumo.lotes 
-          })
           if (insumo.lotes && insumo.lotes.length > 0) {
             insumo.lotes.forEach(lote => {
               todosLosLotes.push({
@@ -434,15 +389,6 @@ export default {
           }
         })
         lotes.value = todosLosLotes
-        console.log('🔍 Total de lotes extraídos (datos de prueba):', lotes.value.length)
-        
-        console.log('✅ DATOS DE PRUEBA CARGADOS EXITOSAMENTE:')
-        console.log('   - Insumos:', insumos.value.length)
-        console.log('   - Categorías:', categorias.value.length)
-        console.log('   - Lotes:', lotes.value.length)
-        console.log('   - Primer insumo:', insumos.value[0])
-        console.log('   - Primera categoría:', categorias.value[0])
-        
         showToast('Datos de prueba cargados (modo offline)', 'info')
       } catch (error) {
         console.error('❌ ERROR AL CARGAR DATOS DE PRUEBA:', error)
@@ -450,7 +396,6 @@ export default {
         showToast('No se pudieron cargar los datos', 'error')
       } finally {
         loading.value = false
-        console.log('🏁 CARGA DE DATOS DE PRUEBA FINALIZADA')
       }
     }
 
@@ -485,6 +430,19 @@ export default {
           await cargarDatos() // Recargar datos
           insumoSeleccionado.value = null
           activeTab.value = 'inventario'
+        } else if (result.errorCode === 'DUPLICATE_INSUMO_NAME') {
+          showToast('Insumo ya existe', 'warning')
+          showConfirmToast(
+            'Insumo ya existe. ¿Deseas ver el insumo existente?',
+            async () => {
+              await verInsumoExistente(result.existingInsumo)
+            },
+            null,
+            {
+              confirmLabel: 'Ver existente',
+              cancelLabel: 'Cancelar'
+            }
+          )
         } else {
           showToast('Error: ' + result.error, 'error')
           // Fallback: agregar localmente
@@ -498,6 +456,29 @@ export default {
       } finally {
         loading.value = false
       }
+    }
+
+    const verInsumoExistente = async (existingInsumo) => {
+      const existingId = existingInsumo?.id
+      if (!existingId) {
+        showToast('No se pudo identificar el insumo existente', 'error')
+        return
+      }
+
+      let insumoCompleto = insumos.value.find(i => i.id === existingId) || null
+
+      if (!insumoCompleto) {
+        const existingResult = await InsumoService.getInsumoById(existingId)
+        if (!existingResult.success) {
+          showToast('No se pudo cargar el insumo existente', 'error')
+          return
+        }
+        insumoCompleto = existingResult.data
+      }
+
+      activeTab.value = 'inventario'
+      insumoSeleccionado.value = insumoCompleto
+      mostrarModalVer.value = true
     }
 
     // Fallback para guardar insumo localmente
@@ -547,8 +528,6 @@ export default {
     const guardarLote = async (loteData) => {
       loading.value = true
       try {
-        console.log('📦 Creando lote:', loteData)
-        
         // Crear el lote con cantidad_actual = 0
         // El movimiento de entrada lo actualizará a la cantidad correcta
         const result = await LoteInsumoService.createLote({
@@ -559,12 +538,9 @@ export default {
 
         if (result.success) {
           const loteCreado = result.data
-          console.log('✅ Lote creado exitosamente:', loteCreado)
-          
           // Registrar automáticamente el movimiento de entrada del nuevo lote
           // Este movimiento actualizará la cantidad_actual del lote
           try {
-            console.log('📝 Registrando movimiento de entrada automático...')
             const movimientoResult = await MovimientoInventarioService.createMovimiento({
               lote_id: loteCreado.id,
               tipo: 'Entrada',
@@ -579,7 +555,6 @@ export default {
             })
 
             if (movimientoResult.success) {
-              console.log('✅ Movimiento de entrada registrado automáticamente')
               showToast('Lote y movimiento de entrada registrados correctamente', 'success')
             } else {
               console.warn('⚠️ Error al registrar movimiento automático:', movimientoResult.error)
@@ -603,7 +578,6 @@ export default {
       }
     }
 
-
     const verInsumo = (insumo) => {
       insumoSeleccionado.value = insumo
       mostrarModalVer.value = true
@@ -621,13 +595,11 @@ export default {
 
     // Funciones para lotes
     const verLote = (lote) => {
-      console.log('Ver lote:', lote)
       loteSeleccionado.value = lote
       mostrarModalVerLote.value = true
     }
 
     const editarLote = (lote) => {
-      console.log('Editar lote:', lote)
       loteSeleccionado.value = lote
       mostrarModalEditarLote.value = true
     }
@@ -640,7 +612,6 @@ export default {
     }
 
     const eliminarLote = (lote) => {
-      console.log('Eliminar lote:', lote)
       loteSeleccionado.value = lote
       mostrarModalEliminarLote.value = true
     }
@@ -661,16 +632,12 @@ export default {
     }
 
     const guardarEdicionLote = async (loteData) => {
-      console.log('🔧 GUARDAR EDICIÓN LOTE CLICKED!', loteData)
       loading.value = true
       try {
-        console.log('🔧 Llamando a LoteInsumoService.updateLote...')
         const result = await LoteInsumoService.updateLote(loteData.id, {
           ...loteData,
           modificado_por: user.value?.id
         })
-        console.log('🔧 Resultado de updateLote:', result)
-
         if (result.success) {
           showToast('Lote actualizado correctamente', 'success')
           await cargarDatos() // Recargar datos
@@ -687,7 +654,6 @@ export default {
     }
 
     const confirmarEliminacionLote = async (lote) => {
-      console.log('🗑️ CONFIRMAR ELIMINACIÓN LOTE:', lote)
       // El modal ya maneja la eliminación, solo recargamos datos
       showToast('Lote eliminado correctamente', 'success')
       await cargarDatos()
@@ -710,20 +676,18 @@ export default {
     }
 
     const guardarEdicion = async (insumoData) => {
-      console.log('🔧 GUARDAR EDICIÓN CLICKED!', insumoData)
       loading.value = true
       try {
-        console.log('🔧 Llamando a InsumoService.updateInsumo...')
         const result = await InsumoService.updateInsumo(insumoData.id, {
           ...insumoData,
           modificado_por: user.value?.id
         })
-        console.log('🔧 Resultado de updateInsumo:', result)
-
         if (result.success) {
           showToast('Insumo actualizado correctamente', 'success')
           await cargarDatos() // Recargar datos
           cerrarModalEditar()
+        } else if (result.errorCode === 'DUPLICATE_INSUMO_NAME') {
+          showToast('Insumo ya existe', 'warning')
         } else {
           showToast('Error: ' + result.error, 'error')
         }
@@ -735,32 +699,21 @@ export default {
       }
     }
 
-    const confirmarEliminacion = async (insumo) => {
-      loading.value = true
-      try {
-        const result = await InsumoService.deleteInsumo(insumo.id, user.value?.id)
-        
-        if (result.success) {
-          showToast('Insumo eliminado correctamente', 'success')
-          await cargarDatos() // Recargar datos
-          cerrarModalEliminar()
-        } else {
-          showToast('Error: ' + result.error, 'error')
-        }
-      } catch (error) {
-        showToast('Error inesperado al eliminar insumo', 'error')
-        console.error('Error:', error)
-      } finally {
-        loading.value = false
-      }
+    const confirmarEliminacion = async () => {
+      await cargarDatos()
+      cerrarModalEliminar()
     }
 
+    const verHistorialInsumo = async () => {
+      cerrarModalEliminar()
+      activeTab.value = 'movimientos'
+      await cargarDatos()
+      showToast('Revisa el historial en la pestaña Movimientos', 'info')
+    }
 
     const registrarMovimiento = async (movimientoData) => {
       loading.value = true
       try {
-        console.log('📝 Registrando movimiento:', movimientoData)
-        
         const result = await MovimientoInventarioService.createMovimiento({
           lote_id: movimientoData.loteId,
           tipo: movimientoData.tipo,
@@ -796,13 +749,11 @@ export default {
     }
 
     const movimientoActualizado = async (movimiento) => {
-      console.log('📝 Movimiento actualizado:', movimiento)
       // Recargar datos para reflejar los cambios
       await cargarDatos()
     }
 
     const movimientoEliminado = async (movimiento) => {
-      console.log('🗑️ Movimiento eliminado:', movimiento)
       // Recargar datos para reflejar los cambios
       await cargarDatos()
     }
@@ -905,13 +856,6 @@ export default {
 
     // Cargar datos al montar el componente
     onMounted(() => {
-      console.log('🎯 COMPONENTE MONTADO - Iniciando carga de datos...')
-      console.log('📊 Estado inicial:', {
-        insumos: insumos.value.length,
-        categorias: categorias.value.length,
-        loading: loading.value,
-        user: user.value?.id || 'No logueado'
-      })
       cargarDatos()
     })
 
@@ -951,6 +895,7 @@ export default {
       guardarEdicion,
       guardarEdicionLote,
       confirmarEliminacion,
+      verHistorialInsumo,
       confirmarEliminacionLote,
       registrarMovimiento,
       movimientoActualizado,

@@ -469,33 +469,58 @@ export const obtenerTopProveedores = async (limite = 10) => {
 
 /**
  * Generar código único para proveedor
+ * Busca todos los códigos existentes y encuentra el máximo numérico
+ * para evitar problemas con el orden alfabético de códigos con ceros
  * @returns {Promise<string>} Código generado
  */
 const generarCodigoProveedor = async () => {
   try {
-    // Obtener el último código
+    // Obtener TODOS los códigos para encontrar el máximo numérico
+    // El orden alfabético no funciona bien con códigos como PROV-0010 vs PROV-002
     const { data, error } = await supabase
       .from('proveedores')
       .select('codigo')
-      .order('codigo', { ascending: false })
-      .limit(1)
+      .not('codigo', 'is', null)
 
     if (error) throw error
 
-    let numeroSiguiente = 1
+    let numeroMaximo = 0
     if (data && data.length > 0) {
-      const ultimoCodigo = data[0].codigo
-      const numero = parseInt(ultimoCodigo.replace('PROV-', ''))
-      if (!isNaN(numero)) {
-        numeroSiguiente = numero + 1
-      }
+      // Encontrar el número máximo entre todos los códigos
+      data.forEach(item => {
+        if (item.codigo) {
+          const match = item.codigo.match(/PROV-(\d+)/)
+          if (match) {
+            const numero = parseInt(match[1], 10)
+            if (!isNaN(numero) && numero > numeroMaximo) {
+              numeroMaximo = numero
+            }
+          }
+        }
+      })
     }
 
-    return `PROV-${numeroSiguiente.toString().padStart(4, '0')}`
+    const numeroSiguiente = numeroMaximo + 1
+    const nuevoCodigo = `PROV-${numeroSiguiente.toString().padStart(4, '0')}`
+
+    // Verificar que el código no exista (por si acaso hay race condition)
+    const { data: existe } = await supabase
+      .from('proveedores')
+      .select('id')
+      .eq('codigo', nuevoCodigo)
+      .limit(1)
+
+    if (existe && existe.length > 0) {
+      // Si ya existe, usar timestamp para garantizar unicidad
+      console.warn('Código ya existe, usando timestamp:', nuevoCodigo)
+      return `PROV-${Date.now().toString().slice(-8)}`
+    }
+
+    return nuevoCodigo
   } catch (error) {
     console.error('Error al generar código:', error)
-    // En caso de error, generar código con timestamp
-    return `PROV-${Date.now().toString().slice(-4)}`
+    // En caso de error, generar código con timestamp completo
+    return `PROV-${Date.now().toString().slice(-8)}`
   }
 }
 

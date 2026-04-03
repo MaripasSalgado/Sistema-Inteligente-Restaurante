@@ -134,16 +134,12 @@ export const descontarInsumoDeLotes = async (
   usuarioId
 ) => {
   try {
-    console.log(`🔄 Descontando insumo ${insumoId}: ${cantidadTotal} unidades`)
-
     let cantidadRestante = cantidadTotal
     let cantidadDescontada = 0
     const movimientos = []
 
     // Calcular total disponible antes de empezar
     const totalDisponible = lotes.reduce((sum, lote) => sum + (lote.cantidad_actual || 0), 0)
-    console.log(`📦 Stock disponible: ${totalDisponible}, necesario: ${cantidadTotal}`)
-
     // Si no hay suficiente stock, NO descontar nada
     if (totalDisponible < cantidadTotal) {
       console.warn(`⚠️ Stock insuficiente para insumo ${insumoId}`)
@@ -161,8 +157,6 @@ export const descontarInsumoDeLotes = async (
       if (cantidadRestante <= 0) break
 
       const cantidadADescontar = Math.min(lote.cantidad_actual, cantidadRestante)
-      console.log(`📤 Descontando ${cantidadADescontar} del lote ${lote.lote}`)
-
       // Actualizar cantidad_actual del lote
       const nuevaCantidad = lote.cantidad_actual - cantidadADescontar
 
@@ -200,15 +194,11 @@ export const descontarInsumoDeLotes = async (
         console.error('❌ Error creando movimiento:', errorMovimiento)
         throw errorMovimiento
       }
-
-      console.log(`✅ Movimiento creado: ${movimientoCreado.id}`)
       movimientos.push(movimientoCreado)
 
       cantidadRestante -= cantidadADescontar
       cantidadDescontada += cantidadADescontar
     }
-
-    console.log(`✅ Descuento completado: ${cantidadDescontada} unidades`)
     return {
       descontado: true,
       cantidad_descontada: cantidadDescontada,

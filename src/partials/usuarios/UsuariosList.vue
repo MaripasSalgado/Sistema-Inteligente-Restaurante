@@ -194,7 +194,6 @@ export default {
       departamento: ''
     })
 
-
     const usuariosFiltrados = computed(() => {
       return props.usuarios.filter(usuario => {
         // Filtro por nombre/email
@@ -272,7 +271,6 @@ export default {
       if (!fechaCreacion) return 'No disponible'
       return new Date(fechaCreacion).toLocaleDateString('es-ES')
     }
-
 
     return {
       filtros,

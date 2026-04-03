@@ -199,7 +199,7 @@ async function ejecutarPredicciones() {
   if (error) {
     console.error('Error generando predicciones:', error)
   } else {
-    console.log('Predicciones generadas:', data)
+    // Predicciones generadas correctamente
   }
 }
 

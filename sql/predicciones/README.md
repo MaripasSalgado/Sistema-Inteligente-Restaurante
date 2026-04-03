@@ -123,7 +123,7 @@ async function generarPredicciones() {
   const result = await PrediccionService.generarPredicciones()
 
   if (result.success) {
-    console.log('Predicciones generadas:', result.data)
+    // Predicciones generadas correctamente
   } else {
     console.error('Error:', result.error)
   }

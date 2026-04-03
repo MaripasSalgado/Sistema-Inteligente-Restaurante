@@ -325,8 +325,6 @@ export default {
 
     const generarReporte = (reporte, formato) => {
       // Simular generación de reporte
-      console.log('Generando reporte:', reporte.nombre, formato, configuracion.value)
-      
       // Simular delay de procesamiento
       setTimeout(() => {
         const nuevoReporte = {
@@ -346,7 +344,6 @@ export default {
 
     const descargarReporte = (reporte) => {
       // Simular descarga
-      console.log('Descargando reporte:', reporte)
       mostrarMensaje(`Descargando ${reporte.nombre}`, 'success')
     }
 

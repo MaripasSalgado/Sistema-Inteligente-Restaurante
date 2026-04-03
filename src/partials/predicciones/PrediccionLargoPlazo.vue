@@ -66,15 +66,6 @@ export default {
       } else {
         sinDatos.value = false
       }
-
-      console.log('[PrediccionLargoPlazo] Datos recibidos:', {
-        labels: data.labels,
-        valoresReales: data.valoresReales,
-        predicciones: data.predicciones,
-        totalReales: data.valoresReales?.filter(v => v !== null).length,
-        totalPredicciones: data.predicciones?.filter(v => v !== null).length
-      })
-
       if (chart) {
         chart.destroy()
       }
@@ -156,9 +147,6 @@ export default {
           }
         ]
       }
-
-      console.log('[PrediccionLargoPlazo] chartData', chartData)
-
       chart = new Chart(ctx, {
         type: 'line',
         data: chartData,

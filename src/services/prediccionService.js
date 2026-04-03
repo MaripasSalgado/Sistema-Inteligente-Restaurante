@@ -13,12 +13,7 @@ export class PrediccionService {
      */
     static async getPrediccionesInsumos(periodo = 'mensual', fechaFiltro = null) {
         const today = new Date().toISOString().split('T')[0]
-
-        console.log('🔍 [getPrediccionesInsumos] Consultando predicciones de insumos...')
-        console.log('📅 Fecha actual:', today)
-        console.log('📊 Periodo:', periodo)
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -49,10 +44,6 @@ export class PrediccionService {
             console.error('❌ [getPrediccionesInsumos] Error:', error)
             return []
         }
-
-        console.log('✅ [getPrediccionesInsumos] Datos recibidos:', data)
-        console.log('📦 [getPrediccionesInsumos] Total registros:', data?.length || 0)
-
         return data.map(pred => ({
             id: pred.id,
             insumo_id: pred.insumo_id,
@@ -92,11 +83,7 @@ export class PrediccionService {
      */
     static async getPrediccionesVentas(fechaFiltro = null) {
         const today = new Date().toISOString().split('T')[0]
-
-        console.log('🔍 [getPrediccionesVentas] Consultando predicciones de ventas...')
-        console.log('📅 Fecha actual:', today)
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -127,10 +114,6 @@ export class PrediccionService {
             console.error('❌ [getPrediccionesVentas] Error:', error)
             return []
         }
-
-        console.log('✅ [getPrediccionesVentas] Datos recibidos:', data)
-        console.log('📦 [getPrediccionesVentas] Total registros:', data?.length || 0)
-
         return data.map(pred => ({
             id: pred.id,
             producto_id: pred.producto_id,
@@ -153,11 +136,7 @@ export class PrediccionService {
      */
     static async getPrediccionIngresos(fechaFiltro = null) {
         const today = new Date().toISOString().split('T')[0]
-
-        console.log('🔍 [getPrediccionIngresos] Consultando predicción de ingresos...')
-        console.log('📅 Fecha actual:', today)
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -186,9 +165,6 @@ export class PrediccionService {
             console.warn('⚠️ [getPrediccionIngresos] Sin registros para los filtros aplicados')
             return null
         }
-
-        console.log('✅ [getPrediccionIngresos] Datos recibidos:', registro)
-
         return {
             valor_predicho: registro.valor_predicho,
             banda_superior: registro.parametros?.banda_superior,
@@ -211,13 +187,7 @@ export class PrediccionService {
     static async getTendenciasHistoricas(tipoPrediccion = 'ingresos', meses = 12, fechaFiltro = null) {
         const fechaInicio = new Date()
         fechaInicio.setMonth(fechaInicio.getMonth() - meses)
-
-        console.log('🔍 [getTendenciasHistoricas] Consultando tendencias históricas...')
-        console.log('📊 Tipo predicción:', tipoPrediccion)
-        console.log('📅 Meses atrás:', meses)
-        console.log('📅 Fecha inicio:', fechaInicio.toISOString().split('T')[0])
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -243,10 +213,6 @@ export class PrediccionService {
                 bandasInferior: []
             }
         }
-
-        console.log('✅ [getTendenciasHistoricas] Datos recibidos:', data)
-        console.log('📦 [getTendenciasHistoricas] Total registros:', data?.length || 0)
-
         const labels = []
         const predicciones = []
         const valoresReales = []
@@ -287,10 +253,7 @@ export class PrediccionService {
      * Obtiene desviaciones recientes para análisis de precisión
      */
     static async getDesviacionesRecientes(limite = 20, fechaFiltro = null) {
-        console.log('🔍 [getDesviacionesRecientes] Consultando desviaciones...')
-        console.log('📊 Límite:', limite)
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -307,10 +270,6 @@ export class PrediccionService {
             console.error('❌ [getDesviacionesRecientes] Error:', error)
             return []
         }
-
-        console.log('✅ [getDesviacionesRecientes] Datos recibidos:', data)
-        console.log('📦 [getDesviacionesRecientes] Total registros:', data?.length || 0)
-
         return data.map(d => ({
             nombre: d.nombre_item,
             tipo: d.tipo_prediccion,
@@ -377,11 +336,7 @@ export class PrediccionService {
      * Obtiene datos para gráfico de barras comparativo (estimado vs real)
      */
     static async getComparacionEstimadoVsReal(tipoPrediccion = 'demanda_insumos', limite = 6, fechaFiltro = null) {
-        console.log('🔍 [getComparacionEstimadoVsReal] Consultando comparación...')
-        console.log('📊 Tipo predicción:', tipoPrediccion)
-        console.log('📊 Límite:', limite)
         if (fechaFiltro) {
-            console.log('⏱️ Fecha filtro:', fechaFiltro)
         }
 
         let query = supabase
@@ -406,10 +361,6 @@ export class PrediccionService {
                 real: []
             }
         }
-
-        console.log('✅ [getComparacionEstimadoVsReal] Datos recibidos:', data)
-        console.log('📦 [getComparacionEstimadoVsReal] Total registros:', data?.length || 0)
-
         return {
             labels: data.map(d => d.nombre_item),
             estimado: data.map(d => d.valor_predicho != null ? Number(d.valor_predicho) : null),
@@ -426,8 +377,6 @@ export class PrediccionService {
      * Útil para botón en el dashboard
      */
     static async generarPredicciones() {
-        console.log('🔍 [generarPredicciones] Ejecutando generación de predicciones...')
-
         const { data, error } = await supabase
             .rpc('generar_todas_predicciones')
 
@@ -439,10 +388,6 @@ export class PrediccionService {
                 data: null
             }
         }
-
-        console.log('✅ [generarPredicciones] Predicciones generadas exitosamente')
-        console.log('📦 [generarPredicciones] Resultado:', data)
-
         return {
             success: true,
             error: null,

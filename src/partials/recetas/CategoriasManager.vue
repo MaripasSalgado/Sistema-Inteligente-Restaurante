@@ -292,18 +292,11 @@ export default {
         alert('El nombre de la categoría es obligatorio')
         return
       }
-
-      console.log('🎯 CategoriasManager - guardarCategoria llamado')
-      console.log('📝 Datos del formulario:', formulario.value)
-      console.log('✏️ Editando?:', categoriaEditando.value ? 'Sí' : 'No')
-
       if (categoriaEditando.value) {
         // Editar categoría existente
-        console.log('📤 Emitiendo evento: editar-categoria')
         emit('editar-categoria', { ...formulario.value })
       } else {
         // Crear nueva categoría
-        console.log('📤 Emitiendo evento: crear-categoria')
         emit('crear-categoria', { ...formulario.value })
       }
 

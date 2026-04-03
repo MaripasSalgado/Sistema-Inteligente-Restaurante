@@ -16,7 +16,6 @@ export const sendEmail = async (to, subject, htmlContent) => {
       subject,
       html: htmlContent,
     });
-    console.log("Email enviado:", info.messageId);
     return { success: true };
   } catch (error) {
     console.error("Error SMTP:", error);

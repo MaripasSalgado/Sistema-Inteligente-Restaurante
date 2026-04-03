@@ -288,7 +288,6 @@ export default {
     }
 
     const duplicarReceta = () => {
-      console.log('🔄 Duplicando receta:', props.receta.nombre)
       emit('duplicar', props.receta)
     }
 

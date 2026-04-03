@@ -301,8 +301,6 @@ export default {
     }
 
     const guardarCambios = () => {
-      console.log('🔧 GUARDAR CAMBIOS CLICKED!', formulario.value)
-      
       if (!formulario.value.nombre || !formulario.value.unidad_medida) {
         alert('Por favor completa todos los campos obligatorios')
         return
@@ -312,8 +310,6 @@ export default {
         alert('Selecciona al menos una categoría')
         return
       }
-
-      console.log('🔧 Emitiendo evento guardar con datos:', { ...formulario.value })
       emit('guardar', { ...formulario.value })
     }
 

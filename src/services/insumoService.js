@@ -1,6 +1,40 @@
 import { supabase } from '@/config/supabase'
 
 export class InsumoService {
+  static normalizarNombre(nombre = '') {
+    return String(nombre).trim().replace(/\s+/g, ' ').toLowerCase()
+  }
+
+  static async verificarNombreDuplicado(nombre, excludeId = null) {
+    const nombreLimpio = String(nombre || '').trim()
+
+    if (!nombreLimpio) {
+      return { success: true, existe: false }
+    }
+
+    let query = supabase
+      .from('insumos')
+      .select('id, nombre')
+      .ilike('nombre', nombreLimpio)
+
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+
+    const { data, error } = await query.limit(10)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    const nombreNormalizado = InsumoService.normalizarNombre(nombreLimpio)
+    const duplicadoExacto = (data || []).find(
+      insumo => InsumoService.normalizarNombre(insumo.nombre) === nombreNormalizado
+    )
+
+    return { success: true, existe: Boolean(duplicadoExacto), insumo: duplicadoExacto || null }
+  }
+
   /**
    * Obtener todos los insumos con sus categorías y lotes
    * @returns {Promise<{success: boolean, data?: array, error?: string}>}
@@ -104,6 +138,20 @@ export class InsumoService {
    */
   static async createInsumo(insumoData) {
     try {
+      const validacionNombre = await InsumoService.verificarNombreDuplicado(insumoData.nombre)
+      if (!validacionNombre.success) {
+        return { success: false, error: validacionNombre.error || 'Error al validar nombre de insumo' }
+      }
+
+      if (validacionNombre.existe) {
+        return {
+          success: false,
+          errorCode: 'DUPLICATE_INSUMO_NAME',
+          error: 'Insumo ya existe',
+          existingInsumo: validacionNombre.insumo
+        }
+      }
+
       const { data, error } = await supabase
         .from('insumos')
         .insert([{
@@ -122,6 +170,14 @@ export class InsumoService {
         .single()
 
       if (error) {
+        if ((error.code === '23505' || (error.message || '').toLowerCase().includes('duplicate')) &&
+            (error.message || '').toLowerCase().includes('nombre')) {
+          return {
+            success: false,
+            errorCode: 'DUPLICATE_INSUMO_NAME',
+            error: 'Insumo ya existe'
+          }
+        }
         return { success: false, error: error.message }
       }
 
@@ -156,6 +212,20 @@ export class InsumoService {
    */
   static async updateInsumo(insumoId, insumoData) {
     try {
+      const validacionNombre = await InsumoService.verificarNombreDuplicado(insumoData.nombre, insumoId)
+      if (!validacionNombre.success) {
+        return { success: false, error: validacionNombre.error || 'Error al validar nombre de insumo' }
+      }
+
+      if (validacionNombre.existe) {
+        return {
+          success: false,
+          errorCode: 'DUPLICATE_INSUMO_NAME',
+          error: 'Insumo ya existe',
+          existingInsumo: validacionNombre.insumo
+        }
+      }
+
       const { data, error } = await supabase
         .from('insumos')
         .update({
@@ -176,6 +246,14 @@ export class InsumoService {
         .single()
 
       if (error) {
+        if ((error.code === '23505' || (error.message || '').toLowerCase().includes('duplicate')) &&
+            (error.message || '').toLowerCase().includes('nombre')) {
+          return {
+            success: false,
+            errorCode: 'DUPLICATE_INSUMO_NAME',
+            error: 'Insumo ya existe'
+          }
+        }
         return { success: false, error: error.message }
       }
 
@@ -215,11 +293,19 @@ export class InsumoService {
    * Eliminar (desactivar) un insumo
    * @param {string} insumoId - ID del insumo
    * @param {string} modificadoPor - ID del usuario que realiza la acción
-   * @param {string} observaciones - Motivo u observaciones de la desactivacion del insumo
    * @returns {Promise<{success: boolean, error?: string}>}
    */
-     static async deleteInsumo(insumoId, modificadoPor, observaciones) {
+  static async deleteInsumo(insumoId, modificadoPor) {
     try {
+      const { data: insumo, error: insumoError } = await supabase
+        .from('insumos')
+        .select('id, estado')
+        .eq('id', insumoId)
+        .single()
+
+      if (insumoError) return { success: false, error: insumoError.message }
+      if (!insumo) return { success: false, error: 'Insumo no encontrado' }
+
       // Verificar si tiene movimientos (usando relación con lotes)
       const { data: lotes, error: lotesError } = await supabase
         .from('lotes_insumos')
@@ -240,6 +326,13 @@ export class InsumoService {
         movimientosCount = count
       }
 
+      const { count: ingredientesCount, error: ingredientesError } = await supabase
+        .from('ingredientes_receta')
+        .select('*', { count: 'exact', head: true })
+        .eq('insumo_id', insumoId)
+
+      if (ingredientesError) return { success: false, error: ingredientesError.message }
+
       if (movimientosCount > 0) {
         return {
           success: false,
@@ -249,12 +342,42 @@ export class InsumoService {
         }
       }
 
+      const tieneLotes = (lotes || []).length > 0
+      const tieneIngredientes = (ingredientesCount || 0) > 0
+
+      // Si el insumo ya está inactivo y no tiene dependencias, eliminar físicamente para limpiar duplicados
+      if (insumo.estado === 'Inactivo' && !tieneLotes && !tieneIngredientes) {
+        const { error: errorCategorias } = await supabase
+          .from('insumos_categorias')
+          .delete()
+          .eq('insumo_id', insumoId)
+
+        if (errorCategorias) return { success: false, error: errorCategorias.message }
+
+        const { error: deleteError } = await supabase
+          .from('insumos')
+          .delete()
+          .eq('id', insumoId)
+
+        if (deleteError) return { success: false, error: deleteError.message }
+
+        return { success: true, message: 'Insumo eliminado permanentemente' }
+      }
+
+      if (insumo.estado === 'Inactivo' && (tieneLotes || tieneIngredientes)) {
+        return {
+          success: false,
+          blocked: true,
+          message: 'No se puede eliminar permanentemente: el insumo tiene dependencias',
+          opciones: ['Ver historial completo']
+        }
+      }
+
       // eliminación lógica
       const { error } = await supabase
         .from('insumos')
         .update({
           estado: 'Inactivo',
-          observaciones: observaciones || null,
           modificado_por: modificadoPor,
           fecha_modificacion: new Date().toISOString()
         })
@@ -272,11 +395,10 @@ export class InsumoService {
    * Desactivar un insumo verificando dependencias
    * @param {string} insumoId - ID del insumo
    * @param {string} modificadoPor - ID del usuario que realiza la acción
-   * @param {string} observaciones - Motivo u observaciones de la desactivacion del insumo
    * @returns {Promise<{success: boolean, error?: string}>}
    */
 
-  static async deactivateInsumo(insumoId, modificadoPor, observaciones) {
+  static async deactivateInsumo(insumoId, modificadoPor) {
     try {
       // verificar si está en recetas activas
       const { count, error } = await supabase
@@ -298,7 +420,6 @@ export class InsumoService {
         .from('insumos')
         .update({
           estado: 'Inactivo',
-          observaciones: observaciones || null,
           modificado_por: modificadoPor,
           fecha_modificacion: new Date().toISOString()
         })
@@ -312,9 +433,9 @@ export class InsumoService {
     }
   }
 
-
   /**
    * Generar código único para insumo
+   * Busca todos los códigos existentes con el mismo prefijo/año y encuentra el máximo numérico
    * @param {string} nombre - Nombre del insumo
    * @returns {Promise<{success: boolean, data?: string, error?: string}>}
    */
@@ -322,27 +443,49 @@ export class InsumoService {
     try {
       const prefijo = nombre.substring(0, 2).toUpperCase()
       const año = new Date().getFullYear()
-      
-      // Obtener el último código del año
+
+      // Obtener TODOS los códigos del año para encontrar el máximo numérico
+      // El orden alfabético no funciona bien con códigos con diferentes longitudes
       const { data, error } = await supabase
         .from('insumos')
         .select('codigo')
         .like('codigo', `${prefijo}-${año}-%`)
-        .order('codigo', { ascending: false })
-        .limit(1)
 
       if (error) {
         return { success: false, error: error.message }
       }
 
-      let correlativo = 1
+      let numeroMaximo = 0
       if (data && data.length > 0) {
-        const ultimoCodigo = data[0].codigo
-        const ultimoCorrelativo = parseInt(ultimoCodigo.split('-')[2])
-        correlativo = ultimoCorrelativo + 1
+        data.forEach(item => {
+          if (item.codigo) {
+            // Extraer el correlativo (tercer segmento del código)
+            const partes = item.codigo.split('-')
+            if (partes.length >= 3) {
+              const num = parseInt(partes[2], 10)
+              if (!isNaN(num) && num > numeroMaximo) {
+                numeroMaximo = num
+              }
+            }
+          }
+        })
       }
 
+      const correlativo = numeroMaximo + 1
       const codigo = `${prefijo}-${año}-${correlativo.toString().padStart(3, '0')}`
+
+      // Verificar que el código no exista (por si acaso hay race condition)
+      const { data: existe } = await supabase
+        .from('insumos')
+        .select('id')
+        .eq('codigo', codigo)
+        .limit(1)
+
+      if (existe && existe.length > 0) {
+        console.warn('Código de insumo ya existe, usando timestamp:', codigo)
+        return { success: true, data: `${prefijo}-${año}-${Date.now().toString().slice(-6)}` }
+      }
+
       return { success: true, data: codigo }
     } catch (error) {
       return { success: false, error: 'Error inesperado al generar código' }

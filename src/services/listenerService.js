@@ -10,8 +10,6 @@ app.use(express.json());
 
 app.post('/api/enviar-alerta', async (req, res) => {
   const { insumo, cantidad, usuario_id } = req.body;
-  console.log('📥 Alerta recibida desde la app:', req.body);
-
   try {
     await sendAlertMail(
       process.env.ADMIN_EMAILS,
@@ -27,4 +25,4 @@ app.post('/api/enviar-alerta', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 9000;
-app.listen(PORT, () => console.log(`🚀 Listener corriendo en puerto ${PORT}`));
+app.listen(PORT, () => {});

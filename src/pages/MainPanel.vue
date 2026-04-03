@@ -270,7 +270,6 @@ export default {
     const sidebarOpen = ref(false)
 
     const navigateTo = (route) => {
-      console.log(`Navegando a: ${route}`)
       router.push(route)
     }
 

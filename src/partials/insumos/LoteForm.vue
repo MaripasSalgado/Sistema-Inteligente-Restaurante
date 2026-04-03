@@ -90,7 +90,6 @@
             </label>
             <select
               v-model="formulario.proveedor_id"
-              @focus="console.log('🎯 [LoteForm] Click en dropdown de proveedores:', proveedores)"
               class="w-full px-3 py-2 bg-zinc-900/80 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option :value="null">Sin proveedor asignado</option>

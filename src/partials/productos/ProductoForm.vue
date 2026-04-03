@@ -363,15 +363,12 @@ export default {
           observaciones: null
         }))
       }
-
-      console.log('📤 ProductoForm - Datos enviados al padre:', productoData)
       emit('guardar', productoData)
     }
 
     // Inicializar formulario si se está editando
     const inicializarFormulario = () => {
       if (props.producto) {
-        console.log('🔧 ProductoForm - Inicializando formulario con producto:', props.producto)
         form.value = {
           nombre: props.producto.nombre || '',
           descripcion: props.producto.descripcion || '',
@@ -401,7 +398,6 @@ export default {
 
     // Watch para cambios en el prop producto
     watch(() => props.producto, (nuevoProducto) => {
-      console.log('👀 ProductoForm - Cambio detectado en prop producto:', nuevoProducto)
       inicializarFormulario()
     }, { immediate: true })
 

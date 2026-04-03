@@ -199,9 +199,6 @@ export default {
         usuarios.value = data || []
         connectionStatus.value = 'connected'
         successMessage.value = `¡Consulta exitosa! Se obtuvieron ${usuarios.value.length} registros de la tabla usuarios.`
-        
-        console.log('Datos obtenidos:', data)
-        
       } catch (error) {
         connectionStatus.value = 'error'
         errorMessage.value = error.message

@@ -9,8 +9,6 @@ export class RecetaService {
    */
   static async getAllRecetas(filters = {}) {
     try {
-      console.log('🔍 getAllRecetas - Iniciando query con filtros:', filters)
-      
       let query = supabase
         .from('recetas')
         .select(`
@@ -59,9 +57,6 @@ export class RecetaService {
       }
 
       const { data, error } = await query
-
-      console.log('🔍 getAllRecetas - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllRecetas - Error:', error)
         return { success: false, error: error.message }
@@ -75,8 +70,6 @@ export class RecetaService {
           }
         })
       }
-
-      console.log('✅ getAllRecetas - Datos obtenidos:', data?.length || 0, 'recetas')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllRecetas - Error inesperado:', error)
@@ -142,29 +135,49 @@ export class RecetaService {
    */
   static async createReceta(recetaData) {
     try {
-      console.log('📝 createReceta - Datos recibidos:', recetaData)
-      console.log('👤 Usuario (creado_por):', recetaData.creado_por)
-
       if (!recetaData.creado_por) {
         console.error('❌ No se proporcionó creado_por')
         return { success: false, error: 'Debe estar autenticado para crear recetas' }
       }
 
       // Generar código único si no se proporciona
-      console.log('🔢 Generando código de receta...')
       let codigo = recetaData.codigo
       if (!codigo) {
+        // Obtener TODOS los códigos para encontrar el máximo numérico
         const { data: recetasExistentes } = await supabase
           .from('recetas')
           .select('codigo')
           .not('codigo', 'is', null)
-          .order('codigo', { ascending: false })
+
+        let numeroMaximo = 0
+        if (recetasExistentes && recetasExistentes.length > 0) {
+          recetasExistentes.forEach(item => {
+            if (item.codigo) {
+              const match = item.codigo.match(/REC-(\d+)/)
+              if (match) {
+                const num = parseInt(match[1], 10)
+                if (!isNaN(num) && num > numeroMaximo) {
+                  numeroMaximo = num
+                }
+              }
+            }
+          })
+        }
+
+        const numeroSiguiente = numeroMaximo + 1
+        codigo = `REC-${String(numeroSiguiente).padStart(3, '0')}`
+
+        // Verificar que el código no exista (por si acaso hay race condition)
+        const { data: existe } = await supabase
+          .from('recetas')
+          .select('id')
+          .eq('codigo', codigo)
           .limit(1)
 
-        const ultimoCodigo = recetasExistentes?.[0]?.codigo || 'REC-000'
-        const numero = parseInt(ultimoCodigo.match(/REC-(\d+)/)?.[1] || '0', 10) + 1
-        codigo = `REC-${String(numero).padStart(3, '0')}`
-        console.log('🔢 Código generado:', codigo)
+        if (existe && existe.length > 0) {
+          console.warn('Código de receta ya existe, usando timestamp:', codigo)
+          codigo = `REC-${Date.now().toString().slice(-6)}`
+        }
       }
 
       const costoTotal = recetaData.costo_total ?? 0.0
@@ -179,7 +192,6 @@ export class RecetaService {
       }
 
       // Crear la receta
-      console.log('💾 Insertando receta en BD...')
       const { data, error } = await supabase
         .from('recetas')
         .insert([{
@@ -206,9 +218,6 @@ export class RecetaService {
         console.error('❌ Error al crear receta:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Receta creada:', data)
-
       // Si hay ingredientes asociados, crear las relaciones
       if (recetaData.ingredientes && recetaData.ingredientes.length > 0) {
         const ingredientesRelaciones = recetaData.ingredientes.map(ingrediente => ({
@@ -268,8 +277,6 @@ export class RecetaService {
    */
   static async updateReceta(recetaId, recetaData) {
     try {
-      console.log('📝 updateReceta - Datos recibidos:', { recetaId, recetaData })
-      
       // Actualizar la receta
       const { data, error } = await supabase
         .from('recetas')
@@ -296,9 +303,6 @@ export class RecetaService {
         console.error('❌ Error al actualizar receta:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Receta actualizada:', data)
-
       // Actualizar relaciones de ingredientes si se proporcionan
       if (recetaData.ingredientes !== undefined) {
         // Primero eliminar relaciones existentes
@@ -382,8 +386,6 @@ export class RecetaService {
    */
   static async deleteReceta(recetaId, usuarioId) {
     try {
-      console.log('🗑️ deleteReceta - Datos recibidos:', { recetaId, usuarioId })
-
       // Los pasos se eliminan automáticamente por ON DELETE CASCADE
       // Pero eliminamos explícitamente las otras relaciones
 
@@ -419,8 +421,6 @@ export class RecetaService {
         console.error('❌ Error al eliminar receta:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Receta eliminada exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar receta:', error)

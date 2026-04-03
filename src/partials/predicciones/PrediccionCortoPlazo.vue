@@ -88,13 +88,9 @@ export default {
     const cargarPredicciones = async () => {
       loading.value = true
       error.value = null
-
-      console.log('🔄 [PrediccionCortoPlazo] Cargando predicciones...')
-
       try {
         // Sin filtro de fecha, siempre obtiene las predicciones futuras más recientes
         const data = await PrediccionService.getPrediccionesInsumosMensual()
-        console.log('✅ [PrediccionCortoPlazo] Predicciones recibidas:', data.length)
         predicciones.value = data
       } catch (err) {
         error.value = 'Error al cargar predicciones'

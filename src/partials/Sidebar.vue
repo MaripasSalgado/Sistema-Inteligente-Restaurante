@@ -485,8 +485,6 @@ export default {
 
     const cerrarSesion = async () => {
       try {
-        console.log('Sidebar: Iniciando cierre de sesión...')
-        
         // Timeout de seguridad para forzar redirección
         const redirectTimeout = setTimeout(() => {
           console.warn('Sidebar: Timeout de seguridad, forzando redirección')
@@ -495,9 +493,6 @@ export default {
         
         const success = await signOut()
         clearTimeout(redirectTimeout)
-        
-        console.log('Sidebar: Resultado del logout:', success)
-        
         if (!success) {
           console.error('Sidebar: El logout falló, forzando redirección')
           router.push('/login')

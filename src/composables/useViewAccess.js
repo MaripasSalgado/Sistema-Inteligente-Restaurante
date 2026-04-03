@@ -49,7 +49,6 @@ export function useViewAccess() {
       
       if (result.success) {
         accessibleViews.value = result.data || []
-        console.log('[useViewAccess] Vistas accesibles cargadas:', accessibleViews.value)
       } else {
         console.error('[useViewAccess] Error cargando vistas:', result.error)
         error.value = result.error
@@ -77,7 +76,6 @@ export function useViewAccess() {
       
       if (result.success) {
         permissionsSummary.value = result.data
-        console.log('[useViewAccess] Resumen de permisos cargado:', permissionsSummary.value)
       } else {
         console.error('[useViewAccess] Error cargando resumen:', result.error)
       }
@@ -96,7 +94,6 @@ export function useViewAccess() {
 
     const viewName = routeToViewMap[route]
     if (!viewName) {
-      console.log(`[useViewAccess] Ruta no mapeada, permitiendo acceso a: ${route}`)
       return true // Si no está en el mapeo, permitir acceso
     }
 
@@ -104,8 +101,6 @@ export function useViewAccess() {
     const hasAccess = accessibleViews.value.some(view => 
       view.vista_ruta === viewName
     )
-
-    console.log(`[useViewAccess] Acceso a ${route} (${viewName}): ${hasAccess}`)
     return hasAccess
   }
 
@@ -126,7 +121,6 @@ export function useViewAccess() {
     if (!view) return false
 
     const hasOperation = view.operaciones_disponibles?.includes(operation) || false
-    console.log(`[useViewAccess] Operación '${operation}' en '${viewName}': ${hasOperation}`)
     return hasOperation
   }
 
@@ -178,7 +172,6 @@ export function useViewAccess() {
     try {
       const result = await ViewAccessService.debugUserPermissions(user.value.id)
       if (result.success) {
-        console.log('[useViewAccess] Debug de permisos:', result.data)
         return result.data
       }
     } catch (error) {

@@ -47,16 +47,6 @@
             </div>
           </div>
 
-          <p class="text-sm text-gray-400 mb-2">
-            Motivo de la eliminación (obligatorio):
-          </p>
-          <textarea
-            v-model="motivo"
-            class="w-full bg-zinc-900/80 border border-zinc-700/50 rounded-lg p-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            rows="3"
-            placeholder="Ej: Lote vencido y descartado, error en registro, producto dañado, etc."
-          />
-
           <!-- Mensaje de alerta -->
           <div v-if="alerta" class="mt-3 p-2 text-sm rounded" :class="alertaClass">
             {{ alerta }}
@@ -74,7 +64,7 @@
 
             <button
               class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="loading || !motivo.trim()"
+              :disabled="loading"
               @click="confirmarEliminacion"
             >
               {{ loading ? 'Eliminando...' : 'Eliminar Lote' }}
@@ -109,7 +99,6 @@ export default {
   },
   emits: ['cerrar', 'confirmado'],
   setup(props, { emit }) {
-    const motivo = ref('')
     const alerta = ref(null)
     const alertaClass = ref('')
     const loading = ref(false)
@@ -139,7 +128,6 @@ export default {
 
     const cerrar = () => {
       if (!loading.value) {
-        motivo.value = ''
         alerta.value = null
         alertaClass.value = ''
         emit('cerrar')
@@ -147,9 +135,7 @@ export default {
     }
 
     const confirmarEliminacion = async () => {
-      if (!props.lote?.id || !motivo.value.trim()) {
-        alerta.value = 'Debes proporcionar un motivo para la eliminación'
-        alertaClass.value = 'bg-yellow-900 text-yellow-200 border border-yellow-700'
+      if (!props.lote?.id) {
         return
       }
 
@@ -160,8 +146,7 @@ export default {
         // Intentar eliminar el lote
         const result = await LoteInsumoService.deleteLote(
           props.lote.id,
-          props.usuarioId,
-          motivo.value.trim()
+          props.usuarioId
         )
 
         if (result.success) {
@@ -187,7 +172,6 @@ export default {
     }
 
     return {
-      motivo,
       alerta,
       alertaClass,
       loading,

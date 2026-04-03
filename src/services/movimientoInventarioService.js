@@ -9,8 +9,6 @@ export class MovimientoInventarioService {
    */
   static async getAllMovimientos(filters = {}) {
     try {
-      console.log('🔍 getAllMovimientos - Iniciando query con filtros:', filters)
-      
       let query = supabase
         .from('movimientos_inventario')
         .select(`
@@ -54,15 +52,10 @@ export class MovimientoInventarioService {
       }
 
       const { data, error } = await query
-
-      console.log('🔍 getAllMovimientos - Resultado query:', { data, error })
-
       if (error) {
         console.error('❌ getAllMovimientos - Error:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ getAllMovimientos - Datos obtenidos:', data?.length || 0, 'movimientos')
       return { success: true, data }
     } catch (error) {
       console.error('❌ getAllMovimientos - Error inesperado:', error)
@@ -174,8 +167,6 @@ export class MovimientoInventarioService {
    */
   static async actualizarCantidadLote(loteId, tipo, cantidad) {
     try {
-      console.log('📊 actualizarCantidadLote - Inicio:', { loteId, tipo, cantidad })
-      
       // Obtener la cantidad actual del lote
       const { data: lote, error: loteError } = await supabase
         .from('lotes_insumos')
@@ -187,32 +178,22 @@ export class MovimientoInventarioService {
         console.error('❌ Error al obtener lote:', loteError)
         return { success: false, error: loteError.message }
       }
-
-      console.log('📦 Lote actual:', lote)
-      
       let nuevaCantidad = parseFloat(lote.cantidad_actual || 0)
       const cantidadMovimiento = parseFloat(cantidad)
-      
-      console.log('🔢 Cantidad actual:', nuevaCantidad, 'Cantidad movimiento:', cantidadMovimiento)
-
       switch (tipo) {
         case 'Entrada':
           nuevaCantidad += cantidadMovimiento
-          console.log('➕ Entrada - Nueva cantidad:', nuevaCantidad)
           break
         case 'Salida':
           nuevaCantidad -= cantidadMovimiento
-          console.log('➖ Salida - Nueva cantidad:', nuevaCantidad)
           break
         case 'Ajuste':
           // Para ajuste, puede ser positivo o negativo
           nuevaCantidad += cantidadMovimiento
-          console.log('🔄 Ajuste - Nueva cantidad:', nuevaCantidad)
           break
         case 'Transferencia':
           // Para transferencias, la cantidad se maneja en el lote de destino
           nuevaCantidad -= cantidadMovimiento
-          console.log('↔️ Transferencia - Nueva cantidad:', nuevaCantidad)
           break
         default:
           console.error('❌ Tipo de movimiento no válido:', tipo)
@@ -241,8 +222,6 @@ export class MovimientoInventarioService {
         console.error('❌ Error al actualizar lote:', updateError)
         return { success: false, error: updateError.message }
       }
-
-      console.log('✅ Lote actualizado exitosamente. Nueva cantidad:', nuevaCantidad)
       return { success: true, nuevaCantidad }
     } catch (error) {
       console.error('❌ Error inesperado al actualizar cantidad del lote:', error)
@@ -504,8 +483,6 @@ export class MovimientoInventarioService {
    */
   static async updateMovimiento(movimientoId, movimientoData) {
     try {
-      console.log('📝 updateMovimiento - Datos recibidos:', { movimientoId, movimientoData })
-      
       // Primero obtener el movimiento original para calcular la diferencia
       const { data: movimientoOriginal, error: errorOriginal } = await supabase
         .from('movimientos_inventario')
@@ -517,16 +494,10 @@ export class MovimientoInventarioService {
         console.error('❌ Error al obtener movimiento original:', errorOriginal)
         return { success: false, error: errorOriginal.message }
       }
-
-      console.log('📋 Movimiento original:', movimientoOriginal)
-      
       // Convertir fecha a timestamp de Costa Rica
       const fechaMovimiento = movimientoData.fecha_movimiento
         ? toTimestampCostaRica(movimientoData.fecha_movimiento)
         : movimientoOriginal.fecha_movimiento
-      
-      console.log('🕐 Fecha movimiento (Costa Rica):', fechaMovimiento)
-      
       // Actualizar el movimiento
       const { data, error } = await supabase
         .from('movimientos_inventario')
@@ -553,17 +524,12 @@ export class MovimientoInventarioService {
         console.error('❌ Error al actualizar movimiento:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Movimiento actualizado:', data)
-      
       // Si cambió el lote, la cantidad o el tipo, necesitamos ajustar las cantidades
       const loteCambiado = movimientoData.lote_id && movimientoData.lote_id !== movimientoOriginal.lote_id
       const cantidadCambiada = movimientoData.cantidad && movimientoData.cantidad !== movimientoOriginal.cantidad
       const tipoCambiado = movimientoData.tipo && movimientoData.tipo !== movimientoOriginal.tipo
       
       if (loteCambiado || cantidadCambiada || tipoCambiado) {
-        console.log('🔄 Detectados cambios en lote, cantidad o tipo. Ajustando inventario...')
-        
         // Revertir el movimiento original en el lote original
         const revertResult = await this.revertirMovimientoEnLote(movimientoOriginal)
         if (!revertResult.success) {
@@ -602,8 +568,6 @@ export class MovimientoInventarioService {
    */
   static async revertirMovimientoEnLote(movimiento) {
     try {
-      console.log('🔄 revertirMovimientoEnLote - Movimiento a revertir:', movimiento)
-      
       let tipoInverso = ''
       let cantidad = parseFloat(movimiento.cantidad)
       
@@ -639,8 +603,6 @@ export class MovimientoInventarioService {
         console.error('❌ Error al revertir movimiento en lote:', result.error)
         return { success: false, error: result.error }
       }
-      
-      console.log('✅ Movimiento revertido exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al revertir movimiento:', error)
@@ -656,8 +618,6 @@ export class MovimientoInventarioService {
    */
   static async deleteMovimiento(movimientoId, usuarioId) {
     try {
-      console.log('🗑️ deleteMovimiento - Datos recibidos:', { movimientoId, usuarioId })
-      
       // Primero obtener el movimiento para revertir sus efectos
       const { data: movimiento, error: errorMovimiento } = await supabase
         .from('movimientos_inventario')
@@ -669,9 +629,6 @@ export class MovimientoInventarioService {
         console.error('❌ Error al obtener movimiento:', errorMovimiento)
         return { success: false, error: errorMovimiento.message }
       }
-
-      console.log('📋 Movimiento a eliminar:', movimiento)
-      
       // Revertir el movimiento en el lote
       const revertResult = await this.revertirMovimientoEnLote(movimiento)
       if (!revertResult.success) {
@@ -689,8 +646,6 @@ export class MovimientoInventarioService {
         console.error('❌ Error al eliminar movimiento:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Movimiento eliminado exitosamente')
       return { success: true }
     } catch (error) {
       console.error('❌ Error inesperado al eliminar movimiento:', error)

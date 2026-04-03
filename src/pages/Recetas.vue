@@ -556,9 +556,6 @@ const guardarReceta = async (receta) => {
   try {
     loading.value = true
     error.value = null
-
-    console.log('📝 guardarReceta - Datos recibidos:', receta)
-
     // Preparar datos para el backend
     const recetaData = {
       nombre: receta.nombre,
@@ -584,9 +581,6 @@ const guardarReceta = async (receta) => {
       })) || [],
       pasos: receta.pasos || []
     }
-
-    console.log('📤 Datos enviados al servicio:', recetaData)
-
     let result
     if (receta.id) {
       // Actualizar receta existente
@@ -610,9 +604,6 @@ const guardarReceta = async (receta) => {
       console.error('❌ Error al guardar receta:', result.error)
       return
     }
-
-    console.log('✅ Receta guardada exitosamente')
-
     // Recargar datos para asegurar sincronización
     await cargarRecetas()
     cerrarFormulario()
@@ -623,7 +614,6 @@ const guardarReceta = async (receta) => {
     loading.value = false
   }
 }
-
 
 const eliminarReceta = async (recetaOId) => {
   try {
@@ -664,7 +654,6 @@ const eliminarReceta = async (recetaOId) => {
     loading.value = false
   }
 }
-
 
     const duplicarReceta = (receta) => {
       recetaSeleccionada.value = receta
@@ -711,7 +700,6 @@ const eliminarReceta = async (recetaOId) => {
 
         const result = await RecetaService.createReceta(recetaData)
         if (result.success) {
-          console.log('✅ Receta duplicada exitosamente')
           // Recargar lista de recetas para asegurar sincronización
           await cargarRecetas()
           // Cerrar ambos modales (detalle y duplicador)
@@ -730,23 +718,14 @@ const eliminarReceta = async (recetaOId) => {
     }
 
     const crearCategoria = async (categoria) => {
-      console.log('🎯 Recetas.vue - crearCategoria recibido')
-      console.log('📥 Datos recibidos:', categoria)
-      console.log('👤 Usuario actual:', user.value?.id)
-
       try {
         loading.value = true
         error.value = null
-
-        console.log('📞 Llamando a CategoriaRecetaService.createCategoria...')
         const result = await CategoriaRecetaService.createCategoria({
           ...categoria,
           creado_por: user.value?.id
         })
-        console.log('📊 Resultado del servicio:', result)
-
         if (result.success) {
-          console.log('✅ Categoría creada exitosamente, recargando lista...')
           // Solo recargar la lista completa (no agregar manualmente)
           await cargarCategorias()
         } else {
@@ -758,7 +737,6 @@ const eliminarReceta = async (recetaOId) => {
         console.error('❌ Error inesperado:', err)
       } finally {
         loading.value = false
-        console.log('🏁 crearCategoria finalizado, loading=false')
       }
     }
 

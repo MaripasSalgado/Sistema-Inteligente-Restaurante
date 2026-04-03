@@ -112,11 +112,6 @@ export class DashboardService {
         const now = new Date()
         const currentTime = now.toTimeString().split(' ')[0]
         const today = now.toISOString().split('T')[0]
-
-        console.log('🔍 [getPersonalConTurnoHoy] Consultando turnos activos...')
-        console.log('📅 Fecha hoy:', today)
-        console.log('⏰ Hora actual:', currentTime)
-
         // Buscar turnos que coincidan con la fecha de hoy y la hora actual
         const { data, count, error } = await supabase
             .from('turnos')
@@ -125,10 +120,6 @@ export class DashboardService {
             .lte('hora_inicio', currentTime)
             .gte('hora_fin', currentTime)
             .neq('estado', 'cancelado')
-
-        console.log('✅ [getPersonalConTurnoHoy] Turnos encontrados:', count || 0)
-        console.log('📦 [getPersonalConTurnoHoy] Datos:', data)
-
         if (error) {
             console.error('❌ [getPersonalConTurnoHoy] Error:', error)
             return 0
@@ -159,15 +150,10 @@ export class DashboardService {
      * Obtiene el total de empleados para calcular porcentaje
      */
     static async getTotalPersonal() {
-        console.log('🔍 [getTotalPersonal] Consultando total de empleados...')
-
         const { count, error } = await supabase
             .from('usuarios')
             .select('*', { count: 'exact', head: true })
             .eq('estado', 'Activo')
-
-        console.log('✅ [getTotalPersonal] Total empleados activos:', count || 0)
-
         if (error) {
             console.error('❌ [getTotalPersonal] Error:', error)
             return 0
@@ -199,8 +185,6 @@ export class DashboardService {
         }
         return (countConsumo || 0) + (countVencimiento || 0)
     }
-
-
 
     // --- GRÁFICOS ---
 

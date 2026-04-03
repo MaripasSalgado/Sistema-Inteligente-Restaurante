@@ -169,7 +169,6 @@ export default {
     const mostrarContraseña = ref(false)
 
     const handleImageError = (e) => {
-      console.log('Error cargando imagen, usando gradiente de respaldo')
       e.target.style.display = 'none'
     }
 
@@ -216,13 +215,10 @@ export default {
         }
 
         // Si llegamos aquí, el login fue exitoso
-        console.log('Login exitoso')
-        
       } catch (error) {
         console.error('Error inesperado en login:', error)
       }
     }
-
 
     // Verificar si hay una sesión activa al cargar la página
     onMounted(async () => {
@@ -237,7 +233,6 @@ export default {
         router.push('/')
       }
     })
-
 
         return {
           form,

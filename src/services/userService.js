@@ -358,8 +358,6 @@ export class UserService {
         console.error('Error al actualizar último acceso:', error)
         return { success: false, error: error.message }
       }
-
-      console.log('✅ Último acceso actualizado (Costa Rica):', data)
       return { success: true, data }
     } catch (error) {
       console.error('Error inesperado al actualizar último acceso:', error)
